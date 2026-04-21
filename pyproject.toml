@@ -1,0 +1,12 @@
+[project]
+name = "fairscan"
+version = "0.1.0"
+requires-python = ">=3.14"
+dependencies = [
+    "aif360>=0.6.1",
+    "fastapi>=0.136.0",
+    "pandas>=3.0.2",
+    "python-multipart>=0.0.26",
+    "scikit-learn>=1.8.0",
+    "uvicorn>=0.45.0",
+]
