@@ -1,0 +1,58 @@
+// Set VITE_MOCK=true in .env.local to develop without the backend running
+const USE_MOCK = import.meta.env.VITE_MOCK === "true";
+const BASE = import.meta.env.VITE_API_URL ?? "http://localhost:8000";
+
+export async function getColumns(file: File): Promise<string[]> {
+  if (USE_MOCK) {
+    const { mockGetColumns } = await import("./mockApi");
+    return mockGetColumns(file);
+  }
+  const form = new FormData();
+  form.append("file", file);
+  const res = await fetch(`${BASE}/columns`, { method: "POST", body: form });
+  if (!res.ok) throw new Error("Failed to read columns");
+  const data = await res.json();
+  return data.columns;
+}
+
+export async function analyze(
+  file: File,
+  sensitiveAttr: string,
+  labelCol: string,
+  privilegedValue: string,
+  unprivilegedValue: string,
+  domain: string
+) {
+  if (USE_MOCK) {
+    const { mockAnalyze } = await import("./mockApi");
+    return mockAnalyze();
+  }
+  const form = new FormData();
+  form.append("file", file);
+  form.append("sensitive_attr", sensitiveAttr);
+  form.append("label_col", labelCol);
+  form.append("privileged_value", privilegedValue);
+  form.append("unprivileged_value", unprivilegedValue);
+  form.append("domain", domain);
+  const res = await fetch(`${BASE}/analyze`, { method: "POST", body: form });
+  if (!res.ok) throw new Error("Analysis failed");
+  return res.json();
+}
+
+export async function fixBias(sessionId: string) {
+  if (USE_MOCK) {
+    const { mockFixBias } = await import("./mockApi");
+    return mockFixBias();
+  }
+  const res = await fetch(`${BASE}/fix`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ session_id: sessionId }),
+  });
+  if (!res.ok) throw new Error("Fix failed");
+  return res.json();
+}
+
+export function downloadUrl(token: string) {
+  return `${BASE}/download/${token}`;
+}
