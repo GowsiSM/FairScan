@@ -1,0 +1,155 @@
+.fix-panel {
+  border-top: 1px solid var(--border);
+  padding: 3rem;
+  animation: fadeUp 0.5s ease both;
+}
+
+.fix-panel-header {
+  margin-bottom: 2.5rem;
+}
+
+.fix-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #2a7d4f;
+  margin-bottom: 0.75rem;
+}
+
+.fix-title {
+  font-family: var(--font-display);
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  font-weight: 400;
+  color: var(--ink);
+  line-height: 1.2;
+}
+
+.improvement {
+  color: #2a7d4f;
+}
+
+/* Before / after */
+.before-after {
+  display: flex;
+  align-items: flex-start;
+  gap: 2rem;
+  margin-bottom: 2.5rem;
+}
+
+.ba-col {
+  flex: 1;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 1.5rem 1.8rem;
+}
+
+.ba-col.after {
+  border-color: rgba(42, 125, 79, 0.3);
+  background: color-mix(in srgb, var(--surface-2) 85%, #2a7d4f 15%);
+}
+
+.ba-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--ink-faint);
+  margin-bottom: 0.5rem;
+}
+
+.ba-score {
+  font-family: var(--font-display);
+  font-size: 3rem;
+  line-height: 1;
+}
+
+.ba-sub {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink-faint);
+  margin-bottom: 1.2rem;
+}
+
+.ba-metrics {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+
+.ba-metric {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+}
+
+.ba-metric-name {
+  color: var(--ink-muted);
+}
+
+.ba-metric-val {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink);
+}
+
+.ba-metric-val.improved {
+  color: #2a7d4f;
+}
+
+.ba-arrow {
+  font-size: 1.5rem;
+  color: var(--ink-faint);
+  padding-top: 2.5rem;
+  flex-shrink: 0;
+}
+
+/* Download */
+.download-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+  padding: 1.5rem 2rem;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.dl-title {
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 0.25rem;
+}
+
+.dl-sub {
+  font-size: 12px;
+  color: var(--ink-muted);
+}
+
+.dl-btn {
+  background: var(--ink);
+  color: var(--surface);
+  border: none;
+  border-radius: 100px;
+  padding: 0.75rem 1.8rem;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  font-family: var(--font-body);
+  transition: opacity 0.2s;
+  flex-shrink: 0;
+}
+
+.dl-btn:hover { opacity: 0.82; }
+
+@media (max-width: 700px) {
+  .fix-panel { padding: 2rem 1.5rem; }
+  .before-after { flex-direction: column; }
+  .ba-arrow { display: none; }
+  .download-row { flex-direction: column; align-items: flex-start; }
+}
