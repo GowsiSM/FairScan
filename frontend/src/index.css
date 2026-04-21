@@ -1,0 +1,19 @@
+@import './pages/Landing.css';
+
+/* Shared animation */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.back-btn {
+  background: none;
+  border: none;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--ink-muted);
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.back-btn:hover { color: var(--ink); }
