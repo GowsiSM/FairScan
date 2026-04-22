@@ -21,7 +21,8 @@ export async function analyze(
   labelCol: string,
   privilegedValue: string,
   unprivilegedValue: string,
-  domain: string
+  domain: string,
+  positiveLabel: string = "1",
 ) {
   if (USE_MOCK) {
     const { mockAnalyze } = await import("./mockApi");
@@ -29,10 +30,11 @@ export async function analyze(
   }
   const form = new FormData();
   form.append("file", file);
-  form.append("sensitive_attr", sensitiveAttr);
+  form.append("sensitive_col", sensitiveAttr);
   form.append("label_col", labelCol);
-  form.append("privileged_value", privilegedValue);
-  form.append("unprivileged_value", unprivilegedValue);
+  form.append("privileged_val", privilegedValue);
+  form.append("unprivileged_val", unprivilegedValue);
+  form.append("positive_label", positiveLabel);
   form.append("domain", domain);
   const res = await fetch(`${BASE}/analyze`, { method: "POST", body: form });
   if (!res.ok) throw new Error("Analysis failed");
