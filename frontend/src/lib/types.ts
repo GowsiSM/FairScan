@@ -18,6 +18,7 @@ export interface AnalysisResult {
   session_id: string;
   bias_score: number;
   domain: string;
+  domain_context?: string;
   sensitive_attr: string;
   label_col: string;
   privileged_group: string;
@@ -27,6 +28,14 @@ export interface AnalysisResult {
   headline: string;
   summary: string;
 }
+
+export interface PresetConfig {
+  domain_context: string;
+  sensitive_col_hint: string;
+  label_col_hint: string;
+}
+
+export type PresetsResponse = Record<string, PresetConfig>;
 
 export interface FixResult {
   bias_score_before: number;

@@ -153,3 +153,17 @@
   .ba-arrow { display: none; }
   .download-row { flex-direction: column; align-items: flex-start; }
 }
+
+.column-before {
+  background-color: rgba(212, 82, 42, 0.05);
+  border: 1px solid rgba(212, 82, 42, 0.2);
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.column-after {
+  background-color: rgba(42, 125, 79, 0.05);
+  border: 1px solid rgba(42, 125, 79, 0.2);
+  border-radius: 8px;
+  padding: 1rem;
+}

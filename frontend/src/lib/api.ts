@@ -2,17 +2,17 @@
 const USE_MOCK = import.meta.env.VITE_MOCK === "true";
 const BASE = import.meta.env.VITE_API_URL ?? "http://localhost:8000";
 
-export async function getColumns(file: File): Promise<string[]> {
+export async function getColumns(file: File): Promise<{columns: string[], unique_values: any}> {
   if (USE_MOCK) {
     const { mockGetColumns } = await import("./mockApi");
-    return mockGetColumns(file);
+    return { columns: mockGetColumns(file), unique_values: {} } as any;
   }
   const form = new FormData();
   form.append("file", file);
   const res = await fetch(`${BASE}/columns`, { method: "POST", body: form });
   if (!res.ok) throw new Error("Failed to read columns");
   const data = await res.json();
-  return data.columns;
+  return { columns: data.columns, unique_values: data.unique_values };
 }
 
 export async function analyze(
@@ -57,4 +57,33 @@ export async function fixBias(sessionId: string) {
 
 export function downloadUrl(token: string) {
   return `${BASE}/download/${token}`;
+}
+
+
+export async function getPresets() {
+  const res = await fetch(`${BASE}/presets`);
+  if (!res.ok) throw new Error("Failed to load presets");
+  return res.json();
+}
+
+export async function getDemoDataset(domain: string) {
+  const res = await fetch(`${BASE}/demo/${domain}`);
+  if (!res.ok) throw new Error("Failed to load demo dataset");
+  return res.json();
+}
+
+
+export async function analyzeColumns(payload: {
+  columns: string[];
+  unique_values: Record<string, string[]>;
+  domain: string;
+  provider: "gemini" | "local";
+}) {
+  const res = await fetch(`${BASE}/analyze-columns`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) throw new Error("AI Analysis failed");
+  return res.json();
 }

@@ -21,10 +21,18 @@ router = APIRouter()
 @router.post("/columns")
 async def columns(file: UploadFile = File(...)) -> dict:
     df = await parse_csv_upload(file)
+    
+    unique_values = {}
+    for col in df.columns:
+        uniques = df[col].dropna().unique()
+        if len(uniques) <= 100:
+            unique_values[col] = [str(x).replace(".0", "") if str(x).endswith(".0") else str(x) for x in uniques]
+            
     return {
         "columns": df.columns.tolist(),
         "preview": preview_json_rows(df, size=2),
         "row_count": int(len(df)),
+        "unique_values": unique_values
     }
 
 
@@ -76,6 +84,7 @@ async def analyze(
         equal_opp_diff=metrics["equal_opp_diff"],
         privileged_label=privileged_name,
         unprivileged_label=unprivileged_name,
+        outcome_label=label_col,
     )
 
     session_id = str(uuid4())
@@ -123,13 +132,23 @@ async def analyze(
         },
     ]
 
-    headline = f"{unprivileged_name} are {round(abs(metrics['stat_parity_diff'] * 100))}% less likely to receive positive outcomes."
-    summary = f"Your dataset shows a significant fairness gap. {unprivileged_name} receive positive outcomes at a rate well below the 80% threshold. This pattern suggests systematic disadvantage in the decision process."
+    di = metrics["disparate_impact"]
+    if di < 1:
+        direction_word = "less"
+        prob_gap = round((1 - di) * 100)
+    else:
+        direction_word = "more"
+        prob_gap = round((di - 1) * 100)
+
+    verb_label = label_col.lower().replace("be ", "")
+    headline = f"{unprivileged_name} are {prob_gap}% {direction_word} likely to be {verb_label}."
+    summary = f"Your dataset shows a significant fairness gap. {unprivileged_name} are {verb_label} at a rate well below the 80% threshold compared to {privileged_name}. This pattern suggests systematic disadvantage."
 
     payload = {
         "session_id": session_id,
         "bias_score": bias_score,
         "domain": domain,
+        "domain_context": get_domain_context(domain),
         "sensitive_attr": sensitive_target,
         "label_col": label_col,
         "privileged_group": privileged_name,

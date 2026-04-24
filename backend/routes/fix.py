@@ -86,6 +86,7 @@ def fix_bias(payload: FixRequest) -> dict:
         equal_opp_diff=after_metrics["equal_opp_diff"],
         privileged_label=privileged_name,
         unprivileged_label=unprivileged_name,
+        outcome_label=config["label_col"],
     )
 
     before_analysis = session.analysis

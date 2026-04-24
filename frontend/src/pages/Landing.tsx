@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import "./Landing.css";
 
 interface Props {
@@ -23,24 +23,32 @@ export default function Landing({ onStart }: Props) {
   return (
     <div className="landing">
       <header className="landing-header">
-        <span className="logo">fairscan</span>
+        <div className="logo-container">
+          <img src="/weight.svg" className="nav-icon" alt="" />
+          <span className="logo">fairscan</span>
+        </div>
         <button className="nav-cta" onClick={onStart}>Try it free →</button>
       </header>
 
       <main>
         <section className="hero" ref={heroRef}>
-          <div className="hero-eyebrow">Bias Detection Tool</div>
-          <h1 className="hero-title">
-            Algorithms decide.<br />
-            <em>Who decides fairly?</em>
-          </h1>
-          <p className="hero-sub">
-            Upload any hiring, loan, or healthcare dataset.<br />
-            See exactly where bias hides — in plain English.
-          </p>
-          <button className="cta-primary" onClick={onStart}>
-            Scan your dataset
-          </button>
+          <div className="hero-content">
+            <div className="hero-eyebrow">Bias Detection Tool</div>
+            <h1 className="hero-title">
+              Algorithms decide.<br />
+              <em>Who decides fairly?</em>
+            </h1>
+            <p className="hero-sub">
+              Upload any hiring, loan, or healthcare dataset.<br />
+              See exactly where bias hides — in plain English.
+            </p>
+            <button className="cta-primary" onClick={onStart}>
+              Scan your dataset
+            </button>
+          </div>
+          <div className="hero-visual">
+            <AnimatedSvg />
+          </div>
         </section>
 
         <section className="impact-strip">
@@ -75,6 +83,32 @@ export default function Landing({ onStart }: Props) {
       <footer className="landing-footer">
         <span>Built for Google Solution Challenge 2026</span>
       </footer>
+    </div>
+  );
+}
+
+function AnimatedSvg() {
+  const [tick, setTick] = useState(0);
+  const totalFrames = 44; // Matches the actual file count (000-043)
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTick((prev) => prev + 1);
+    }, 60);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Ping-pong bounce logic
+  const cycleLength = (totalFrames - 1) * 2;
+  const cycleTick = tick % cycleLength;
+  const frame = cycleTick < totalFrames ? cycleTick : cycleLength - cycleTick;
+
+  const frameStr = String(frame).padStart(3, "0");
+  const src = `/weight-balance/Whisk_idzlhtn5yjywytnl1iyyitotkjykrtl4ytmm1so_${frameStr}.svg`;
+
+  return (
+    <div className="animated-svg-container">
+      <img src={src} alt="Animated balance scale" className="animated-svg" />
     </div>
   );
 }

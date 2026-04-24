@@ -45,7 +45,8 @@ def preview_json_rows(df: pd.DataFrame, size: int = 2) -> list[dict[str, Any]]:
 
 
 def _as_text(series: pd.Series) -> pd.Series:
-    return series.astype(str).str.strip()
+    s = series.astype(str).str.strip()
+    return s.str.replace(r"\.0$", "", regex=True)
 
 
 def prepare_binary_dataset(
