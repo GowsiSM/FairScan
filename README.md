@@ -27,13 +27,13 @@ The tools that detect this bias (like IBM AIF360) exist — but they require dee
 
 ## Demo
 
-> Try it live: [link coming soon]
+> Try it live:
 
 Sample datasets included — no upload needed to explore:
 
-- `hiring.csv` — job application decisions
-- `lending.csv` — loan approvals
-- `healthcare.csv` — treatment allocation
+- `hiring.csv` : job application decisions
+- `lending.csv` : loan approvals
+- `healthcare.csv` : treatment allocation
 
 ---
 
@@ -93,7 +93,8 @@ fairscan/
 
 ```bash
 cd backend
-pip install -r requirements.txt
+touch .env
+> Then add: GEMINI_API_KEY=your_actual_api_key_here
 uvicorn main:app --reload
 # Runs on http://localhost:8000
 # API docs at http://localhost:8000/docs
@@ -104,7 +105,6 @@ uvicorn main:app --reload
 ```bash
 cd frontend
 npm install
-cp .env.example .env.local   # set VITE_API_URL=http://localhost:8000
 npm run dev
 # Runs on http://localhost:5173
 ```
@@ -130,15 +130,6 @@ FairScan uses three standard fairness metrics from IBM AIF360:
 | Equal Opportunity  | Gap among equally qualified candidates    | More than ±10%                 |
 
 The **fix** applies Reweighing — it adds a `reweighing_weight` column to your dataset. When you train a model using these weights as `sample_weight`, the model learns fairer patterns without changing historical records.
-
----
-
-## Team
-
-| Name            | Role                                  |
-| --------------- | ------------------------------------- |
-| [Your name]     | Frontend — React, UI/UX, design       |
-| [Friend's name] | Backend — FastAPI, AIF360, deployment |
 
 ---
 
