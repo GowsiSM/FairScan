@@ -6,6 +6,7 @@ from fastapi import APIRouter, File, Form, UploadFile
 
 from presets import get_domain_context
 from services.bias_engine import (
+    compute_feature_importance,
     compute_metrics,
     parse_csv_upload,
     prepare_binary_dataset,
@@ -146,6 +147,12 @@ async def analyze(
     headline = f"{unprivileged_name} are {prob_gap}% {direction_word} likely to be {verb_label}."
     summary = f"Your dataset shows a significant fairness gap. {unprivileged_name} are {verb_label} at a rate well below the 80% threshold compared to {privileged_name}. This pattern suggests systematic disadvantage."
 
+    # Compute bias root cause — feature importance analysis
+    try:
+        bias_contributors = compute_feature_importance(prepared)
+    except Exception:
+        bias_contributors = []
+
     payload = {
         "session_id": session_id,
         "bias_score": bias_score,
@@ -159,6 +166,7 @@ async def analyze(
         "group_stats": group_stats_list,
         "headline": headline,
         "summary": summary,
+        "bias_contributors": bias_contributors,
     }
 
     set_session(

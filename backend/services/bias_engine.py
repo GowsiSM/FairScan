@@ -271,6 +271,74 @@ def compute_metrics(prepared: PreparedData) -> dict[str, Any]:
     }
 
 
+def compute_feature_importance(prepared: PreparedData) -> list[dict[str, Any]]:
+    """Identify which features contribute most to the bias gap."""
+    df = prepared.df_original.copy()
+    label_binary = (
+        (_as_text(df[prepared.label_col]) == prepared.positive_label)
+        .astype(int)
+        .to_numpy()
+    )
+
+    feature_df = df.drop(columns=[prepared.label_col])
+    x = pd.get_dummies(feature_df, drop_first=False)
+
+    if len(np.unique(label_binary)) < 2:
+        return []
+
+    model = LogisticRegression(max_iter=500)
+    model.fit(x, label_binary)
+
+    # Get absolute feature importances from coefficients
+    importances = np.abs(model.coef_[0])
+
+    # Correlate each feature with the sensitive attribute to see
+    # which features are both important AND correlated with group membership
+    sensitive_binary = (
+        _as_text(df[prepared.sensitive_col]) == prepared.privileged_val
+    ).astype(int).to_numpy()
+
+    # Rebuild x for correlation (same dummies)
+    x_np = x.to_numpy().astype(float)
+    correlations = np.array([
+        abs(np.corrcoef(x_np[:, i], sensitive_binary)[0, 1])
+        if np.std(x_np[:, i]) > 0 else 0.0
+        for i in range(x_np.shape[1])
+    ])
+
+    # Bias contribution = importance × correlation with sensitive attr
+    bias_contribution = importances * correlations
+
+    # Map back to original column names (collapse one-hot dummies)
+    col_contributions: dict[str, float] = {}
+    for feat_name, contrib in zip(x.columns, bias_contribution):
+        # One-hot columns are named "OrigCol_Value" — get base column
+        base_col = feat_name
+        for orig_col in feature_df.columns:
+            if feat_name.startswith(f"{orig_col}_") or feat_name == orig_col:
+                base_col = orig_col
+                break
+        # Skip the sensitive column itself — it's obviously correlated
+        if base_col == prepared.sensitive_col:
+            continue
+        col_contributions[base_col] = col_contributions.get(base_col, 0.0) + contrib
+
+    if not col_contributions:
+        return []
+
+    # Normalize to percentages and take top 5
+    total = sum(col_contributions.values())
+    if total == 0:
+        return []
+
+    sorted_contribs = sorted(col_contributions.items(), key=lambda x: x[1], reverse=True)[:5]
+    return [
+        {"feature": name, "importance": round((val / total) * 100, 1)}
+        for name, val in sorted_contribs
+        if val > 0
+    ]
+
+
 def apply_reweighing(prepared: PreparedData) -> tuple[pd.DataFrame, dict[str, Any]]:
     rw = Reweighing(
         privileged_groups=prepared.privileged_groups,

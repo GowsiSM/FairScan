@@ -14,6 +14,11 @@ export interface GroupStat {
   count: number;
 }
 
+export interface BiasContributor {
+  feature: string;
+  importance: number;
+}
+
 export interface AnalysisResult {
   session_id: string;
   bias_score: number;
@@ -27,6 +32,7 @@ export interface AnalysisResult {
   group_stats: GroupStat[];
   headline: string;
   summary: string;
+  bias_contributors?: BiasContributor[];
 }
 
 export interface PresetConfig {
