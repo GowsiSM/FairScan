@@ -49,6 +49,44 @@ def _as_text(series: pd.Series) -> pd.Series:
     return s.str.replace(r"\.0$", "", regex=True)
 
 
+def _parse_and_apply_range(series: pd.Series, range_str: str) -> pd.Series | None:
+    import re
+    match = re.search(r'\(([^)]+)\)$', range_str.strip())
+    if not match:
+        return None
+    
+    expr = match.group(1).replace(" ", "")
+    num_series = pd.to_numeric(series, errors='coerce')
+    
+    if '-' in expr:
+        parts = expr.split('-')
+        if len(parts) == 2 and parts[0].replace('.','',1).isdigit() and parts[1].replace('.','',1).isdigit():
+            min_val = float(parts[0])
+            max_val = float(parts[1])
+            return (num_series >= min_val) & (num_series <= max_val)
+    elif expr.endswith('+'):
+        val = expr[:-1]
+        if val.replace('.','',1).isdigit():
+            return num_series >= float(val)
+    elif expr.startswith('<='):
+        val = expr[2:]
+        if val.replace('.','',1).isdigit():
+            return num_series <= float(val)
+    elif expr.startswith('<'):
+        val = expr[1:]
+        if val.replace('.','',1).isdigit():
+            return num_series < float(val)
+    elif expr.startswith('>='):
+        val = expr[2:]
+        if val.replace('.','',1).isdigit():
+            return num_series >= float(val)
+    elif expr.startswith('>'):
+        val = expr[1:]
+        if val.replace('.','',1).isdigit():
+            return num_series > float(val)
+            
+    return None
+
 def prepare_binary_dataset(
     df: pd.DataFrame,
     *,
@@ -78,11 +116,17 @@ def prepare_binary_dataset(
             status_code=400,
             detail=f"positive_label '{positive_label}' not found in {label_col}.",
         )
+
+    priv_mask = sensitive_text == privileged_val
     if privileged_val not in unique_sensitive:
-        raise HTTPException(
-            status_code=400,
-            detail=f"privileged_val '{privileged_val}' not found in {sensitive_col}.",
-        )
+        range_mask = _parse_and_apply_range(df[sensitive_col], privileged_val)
+        if range_mask is not None:
+            priv_mask = range_mask
+        else:
+            raise HTTPException(
+                status_code=400,
+                detail=f"privileged_val '{privileged_val}' not found in {sensitive_col}.",
+            )
 
     inferred_unpriv = unprivileged_val
     if inferred_unpriv is None:
@@ -93,18 +137,23 @@ def prepare_binary_dataset(
             )
         inferred_unpriv = candidates[0]
 
+    unpriv_mask = sensitive_text == inferred_unpriv
     if inferred_unpriv not in unique_sensitive:
-        raise HTTPException(
-            status_code=400,
-            detail=f"unprivileged_val '{inferred_unpriv}' not found in {sensitive_col}.",
-        )
+        range_mask = _parse_and_apply_range(df[sensitive_col], inferred_unpriv)
+        if range_mask is not None:
+            unpriv_mask = range_mask
+        else:
+            raise HTTPException(
+                status_code=400,
+                detail=f"unprivileged_val '{inferred_unpriv}' not found in {sensitive_col}.",
+            )
+
     if inferred_unpriv == privileged_val:
         raise HTTPException(
             status_code=400, detail="privileged_val and unprivileged_val must differ."
         )
 
-    # Keep only selected comparison groups for consistent fairness math.
-    keep_mask = (sensitive_text == privileged_val) | (sensitive_text == inferred_unpriv)
+    keep_mask = priv_mask | unpriv_mask
     df_filtered = df.loc[keep_mask].copy()
     if df_filtered.empty:
         raise HTTPException(
@@ -112,11 +161,16 @@ def prepare_binary_dataset(
         )
 
     label_filtered = _as_text(df_filtered[label_col])
-    sensitive_filtered = _as_text(df_filtered[sensitive_col])
+    priv_mask_filtered = priv_mask.loc[keep_mask]
+    
+    # Ensure the column can hold string labels (prevents TypeError on numeric columns)
+    df_filtered[sensitive_col] = df_filtered[sensitive_col].astype(object)
+    df_filtered.loc[priv_mask_filtered, sensitive_col] = privileged_val
+    df_filtered.loc[~priv_mask_filtered, sensitive_col] = inferred_unpriv
 
     df_binary = df_filtered.copy()
     df_binary[label_col] = (label_filtered == positive_label).astype(int)
-    df_binary[sensitive_col] = (sensitive_filtered == privileged_val).astype(int)
+    df_binary[sensitive_col] = priv_mask_filtered.astype(int)
 
     dataset = BinaryLabelDataset(
         df=df_binary,

@@ -46,6 +46,8 @@ async def analyze(
     privileged_value: str | None = Form(default=None),
     unprivileged_val: str | None = Form(default=None),
     unprivileged_value: str | None = Form(default=None),
+    privileged_name_override: str | None = Form(default=None),
+    unprivileged_name_override: str | None = Form(default=None),
     positive_label: str = Form("1"),
     domain: str = Form("hiring"),
 ) -> dict:
@@ -75,8 +77,8 @@ async def analyze(
         metrics["equal_opp_diff"],
     )
 
-    privileged_name = group_label(sensitive_target, prepared.privileged_val)
-    unprivileged_name = group_label(sensitive_target, prepared.unprivileged_val)
+    privileged_name = privileged_name_override or group_label(sensitive_target, prepared.privileged_val)
+    unprivileged_name = unprivileged_name_override or group_label(sensitive_target, prepared.unprivileged_val)
 
     explanations = build_explanations(
         disparate_impact=metrics["disparate_impact"],

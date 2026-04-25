@@ -18,13 +18,11 @@
   width: 100vw;
   height: 100vh;
   z-index: -2;
-  background: linear-gradient(
-    135deg,
-    var(--surface),
-    var(--surface-2),
-    var(--surface),
-    var(--accent-soft)
-  );
+  background: linear-gradient(135deg,
+      var(--surface),
+      var(--surface-2),
+      var(--surface),
+      var(--accent-soft));
   background-size: 400% 400%;
   animation: bgPan 12s ease-in-out infinite alternate;
   opacity: 0.5;
@@ -37,11 +35,9 @@
   left: 50%;
   width: 70vw;
   height: 70vh;
-  background: radial-gradient(
-    circle,
-    rgba(212, 82, 42, 0.08) 0%,
-    transparent 70%
-  );
+  background: radial-gradient(circle,
+      rgba(212, 82, 42, 0.08) 0%,
+      transparent 70%);
   transform: translate(-50%, -50%);
   z-index: -1;
   filter: blur(60px);
@@ -54,10 +50,12 @@
     transform: translate(-60%, -40%) scale(1);
     opacity: 0.6;
   }
+
   50% {
     transform: translate(-40%, -60%) scale(1.1);
     opacity: 1;
   }
+
   100% {
     transform: translate(-50%, -50%) scale(0.9);
     opacity: 0.7;
@@ -68,19 +66,26 @@
   0% {
     background-position: 0% 50%;
   }
+
   100% {
     background-position: 100% 50%;
   }
 }
 
-.upload-header {
-  position: absolute;
-  top: 2rem;
-  left: 3rem;
-  right: 3rem;
+.upload-layout {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  gap: 4rem;
+  align-items: stretch;
+  position: relative;
+  z-index: 1;
+  width: 100%;
+}
+
+.upload-sidebar {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
+  padding-top: 1rem;
 }
 
 .back-btn {
@@ -90,20 +95,22 @@
   background: none;
   border: none;
   font-family: var(--font-mono);
-  font-size: 24px;
-  color: var(--ink-muted);
+  font-size: 28px;
+  font-weight: 500;
+  color: var(--ink);
   cursor: pointer;
   transition: color 0.2s;
   padding: 0;
+  margin-bottom: 4rem;
 }
 
 .back-btn .nav-icon {
-  width: 64px;
-  height: 64px;
+  width: 72px;
+  height: 72px;
 }
 
 .back-btn:hover {
-  color: var(--ink);
+  color: var(--accent);
 }
 
 .page-bg-icon {
@@ -118,63 +125,119 @@
   z-index: -3;
 }
 
-.step-indicator {
+.vertical-step-indicator {
   display: flex;
-  gap: 0.5rem;
-}
-
-.step-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 4px;
-  background: var(--border);
-  transition: all 0.3s;
-}
-
-.step-dot.active {
-  background: var(--accent);
-  width: 24px;
-}
-
-.upload-main {
-  display: flex;
-  flex-direction: row;
+  flex-direction: column;
   gap: 2rem;
-  height: 680px;
-  align-items: stretch;
+}
+
+.v-step {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  opacity: 0.4;
+  transition: all 0.3s ease;
   position: relative;
+}
+
+.v-step.clickable {
+  cursor: pointer;
+}
+.v-step.clickable:hover {
+  opacity: 0.7;
+}
+
+.v-step.active, .v-step.done {
+  opacity: 1;
+}
+
+.v-step-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--border);
+  transition: all 0.3s ease;
+  z-index: 2;
+  position: relative;
+}
+
+.v-step.active .v-step-dot {
+  background: var(--accent);
+  box-shadow: 0 0 10px var(--accent);
+  transform: scale(1.5);
+}
+
+.v-step.done .v-step-dot {
+  background: var(--accent-soft);
+}
+
+.v-step-line {
+  position: absolute;
+  top: 12px;
+  left: 5.5px;
+  width: 1px;
+  height: calc(100% + 2rem);
+  background: var(--border);
   z-index: 1;
 }
 
+.v-step:last-child .v-step-line {
+  display: none;
+}
+
+.v-step-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.v-step-num {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--ink-faint);
+}
+.v-step.active .v-step-num {
+  color: var(--accent);
+}
+
+.v-step-label {
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.upload-main {
+  position: relative;
+  height: 680px;
+  z-index: 1;
+  /* Overflow hidden ensures sliding cards are clipped */
+  /* Wait, if I clip, box-shadow might be clipped. Let's just fade them out instead of clipping, or use a small offset so they aren't fully clipped. */
+}
+
 .upload-main::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: var(--surface);
-  border-radius: 16px;
-  z-index: 5;
-  pointer-events: none;
+  display: none;
 }
 
 .step-block {
-  flex: 1;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 16px;
   padding: 2.5rem;
-  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-  overflow: hidden;
-  position: relative;
+  transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   flex-direction: column;
   z-index: 20;
+  opacity: 0;
+  pointer-events: none;
 }
 
 .step-block.current {
-  flex: 3;
+  opacity: 1;
+  pointer-events: auto;
   box-shadow:
     0 12px 32px rgba(0, 0, 0, 0.05),
     0 0 15px rgba(212, 82, 42, 0.15) inset;
@@ -183,6 +246,22 @@
   overflow-y: auto;
 }
 
+/* Transform based on step active state for vertical sliding */
+/* Step 1 is active */
+.upload-main.step-1-active .step-block:nth-child(1) { transform: translateY(0); }
+.upload-main.step-1-active .step-block:nth-child(2) { transform: translateY(60px); }
+.upload-main.step-1-active .step-block:nth-child(3) { transform: translateY(60px); }
+
+/* Step 2 is active */
+.upload-main.step-2-active .step-block:nth-child(1) { transform: translateY(-60px); }
+.upload-main.step-2-active .step-block:nth-child(2) { transform: translateY(0); }
+.upload-main.step-2-active .step-block:nth-child(3) { transform: translateY(60px); }
+
+/* Step 3 is active */
+.upload-main.step-3-active .step-block:nth-child(1) { transform: translateY(-60px); }
+.upload-main.step-3-active .step-block:nth-child(2) { transform: translateY(-60px); }
+.upload-main.step-3-active .step-block:nth-child(3) { transform: translateY(0); }
+
 @keyframes borderGlow {
   0% {
     box-shadow:
@@ -190,6 +269,7 @@
       0 0 5px rgba(212, 82, 42, 0.1) inset;
     border-color: var(--accent-soft);
   }
+
   100% {
     box-shadow:
       0 12px 32px rgba(0, 0, 0, 0.05),
@@ -198,36 +278,9 @@
   }
 }
 
-.step-block.done {
-  cursor: pointer;
-  opacity: 0.7;
-}
-.step-block.done:hover {
-  opacity: 1;
-  border-color: var(--accent-soft);
-}
-
-.step-block:not(.current) .step-title {
-  font-size: 1.1rem;
-  white-space: nowrap;
-}
-
-.step-block:not(.current) .domain-grid,
-.step-block:not(.current) .dropzone,
-.step-block:not(.current) .demo-row,
-.step-block:not(.current) .fields,
-.step-block:not(.current) .analyze-btn,
-.step-block:not(.current) .ai-toggle-panel,
-.step-block:not(.current) .scanning-container,
-.step-block:not(.current) .ai-loading,
-.step-block:not(.current) .csv-table-preview,
-.step-block:not(.current) .upload-error,
-.step-block:not(.current) .scanning-text {
-  display: none;
-}
-
+/* Removed specific inactive state overrides so elements fade smoothly */
 .step-summary {
-  display: none;
+  display: flex;
   justify-content: flex-start;
   gap: 0.5rem 1.5rem;
   margin-bottom: 1rem;
@@ -533,6 +586,7 @@ input[type="text"]:focus {
   align-items: center;
   gap: 0.5rem;
 }
+
 .ai-badge {
   font-size: 0.75rem;
   padding: 1px 6px;
@@ -611,11 +665,13 @@ input[type="text"]:focus {
 }
 
 @keyframes columnHighlight {
+
   0%,
   100% {
     background: transparent;
     color: var(--ink-muted);
   }
+
   15% {
     background: rgba(212, 82, 42, 0.1);
     color: var(--accent);
@@ -656,6 +712,7 @@ input[type="text"]:focus {
   0% {
     opacity: 0.3;
   }
+
   100% {
     opacity: 0.7;
   }

@@ -93,7 +93,7 @@ body {
 
 .nav-cta:hover {
   background: var(--surface-2);
-  border-color: var(--ink-muted);
+  border-color: var(--accent);
 }
 
 /* Hero */

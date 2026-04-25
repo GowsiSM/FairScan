@@ -23,8 +23,13 @@ Columns: {req.columns}
 Categorical Options: {req.unique_values}
 
 Identify:
-1. Which column is the MOST likely primary sensitive demographic attribute (e.g., gender, race, age). If multiple exist, prioritize gender or race as they are standard for initial scans.
+1. Which column is the MOST likely primary sensitive demographic attribute (e.g., gender, race, age). If multiple exist, prioritize gender or race as they are standard for initial scans. 
 2. For the "outcome" (label) column, identify which value represents the "favorable" (not impacted/successful) outcome and which is "unfavorable" (impacted/failed).
+3. For the identified sensitive column, map its raw categorical values to human-readable group names (e.g., map "1" to "Male" and "0" to "Female"). 
+4. MANDATORY GROUPING: If the identified sensitive column contains continuous NUMERICAL data (like Age, Income, or Score), you MUST provide a list of semantic category ranges to help the user group these values. 
+   - Format each range exactly as "GroupName (Min-Max)" or "GroupName (Min+)" or "GroupName (<Max)".
+   - Example for Age: ["Child (0-17)", "Adult (18-64)", "Senior (65+)"]
+   - If the column is strictly categorical (e.g. "Male"/"Female" or "1"/"0"), leave the "numerical_groups" dictionary empty for that column.
 
 Priority for sensitive columns: 
 - If 'gender' or 'sex' exists, pick that first.
@@ -34,7 +39,9 @@ Priority for sensitive columns:
 Return EXACTLY this JSON structure and nothing else:
 {{
   "sensitive_columns": {{ "column_name_here": "most sensitive" }},
-  "outcome_values": {{ "outcome_col_name": {{ "value_exactly_as_given_in_options": "not impacted", "other_value": "impacted" }} }}
+  "outcome_values": {{ "outcome_col_name": {{ "value_exactly_as_given_in_options": "not impacted", "other_value": "impacted" }} }},
+  "group_mappings": {{ "column_name_here": {{ "1": "Male", "0": "Female" }} }},
+  "numerical_groups": {{ "column_name_here": ["Group 1 (0-10)", "Group 2 (11+)"] }}
 }}
 """
     
@@ -43,7 +50,7 @@ Return EXACTLY this JSON structure and nothing else:
         if not api_key:
             raise HTTPException(status_code=500, detail="GEMINI_API_KEY not configured on server")
         
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemma-4-31b-it:generateContent?key={api_key}"
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={api_key}"
         payload = {
             "contents": [{"parts": [{"text": system_prompt}]}],
             "generationConfig": {"response_mime_type": "application/json"}

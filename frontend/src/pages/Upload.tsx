@@ -110,6 +110,10 @@ export default function Upload({ onResult, onBack }: Props) {
     if (f) handleFile(f);
   };
 
+  const getGroupValueName = (col: string, val: string) => {
+    return aiData?.group_mappings?.[col]?.[val] || undefined;
+  };
+
   const handleSubmit = async () => {
     if (
       !file ||
@@ -124,6 +128,9 @@ export default function Upload({ onResult, onBack }: Props) {
     setLoading(true);
     setError("");
     try {
+      const privName = getGroupValueName(sensitiveAttr, privVal);
+      const unprivName = getGroupValueName(sensitiveAttr, unprivVal);
+      
       const result = await analyze(
         file,
         sensitiveAttr,
@@ -132,6 +139,8 @@ export default function Upload({ onResult, onBack }: Props) {
         unprivVal,
         domain,
         positiveLabel,
+        privName,
+        unprivName,
       );
       onResult(result);
     } catch {
@@ -156,6 +165,13 @@ export default function Upload({ onResult, onBack }: Props) {
   const getOutcomeValueLabel = (val: string) => {
     if (labelCol && aiData?.outcome_values?.[labelCol]?.[val]) {
       return `${val} (${aiData.outcome_values[labelCol][val]})`;
+    }
+    return val;
+  };
+
+  const getGroupValueLabel = (col: string, val: string) => {
+    if (aiData?.group_mappings?.[col]?.[val]) {
+      return `${aiData.group_mappings[col][val]} (${val})`;
     }
     return val;
   };
@@ -203,19 +219,35 @@ export default function Upload({ onResult, onBack }: Props) {
   return (
     <div className="upload-page">
       <img src="/weight.svg" className="page-bg-icon" alt="" />
-      <header className="upload-header">
-        <button className="back-btn" onClick={onBack}>
-          <img src="/weight.svg" className="nav-icon" alt="" />
-          fairscan
-        </button>
-        <div className="step-indicator">
-          {[1, 2, 3].map((n) => (
-            <span key={n} className={`step-dot ${step >= n ? "active" : ""}`} />
-          ))}
-        </div>
-      </header>
+      <div className="upload-layout">
+        <aside className="upload-sidebar">
+          <button className="back-btn" onClick={onBack}>
+            <img src="/weight.svg" className="nav-icon" alt="" />
+            fairscan
+          </button>
+          <div className="vertical-step-indicator">
+            {[
+              { num: 1, label: "Context", click: () => step !== 1 && setStep(1), clickable: step !== 1 },
+              { num: 2, label: "Dataset", click: () => step > 2 && setStep(2), clickable: step > 2 },
+              { num: 3, label: "Configure", click: undefined, clickable: false }
+            ].map(s => (
+              <div 
+                key={s.num} 
+                className={`v-step ${step === s.num ? 'active' : ''} ${step > s.num ? 'done' : ''} ${s.clickable ? 'clickable' : ''}`}
+                onClick={s.click}
+              >
+                <div className="v-step-line"></div>
+                <div className="v-step-dot"></div>
+                <div className="v-step-text">
+                  <span className="v-step-num">0{s.num}</span>
+                  <span className="v-step-label">{s.label}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </aside>
 
-      <main className="upload-main">
+      <main className={`upload-main step-${step}-active`}>
         {/* Step 1 — Domain */}
         <section
           className={`step-block ${step === 1 ? "current" : "done"}`}
@@ -425,9 +457,17 @@ export default function Upload({ onResult, onBack }: Props) {
                     onChange={(e) => setPrivVal(e.target.value)}
                   >
                     <option value="">Select value</option>
+                    {aiData?.numerical_groups?.[sensitiveAttr]?.map((grp: string) => (
+                      <option key={grp} value={grp}>
+                        ✦ {grp}
+                      </option>
+                    ))}
+                    {aiData?.numerical_groups?.[sensitiveAttr] && (
+                      <option disabled>──────</option>
+                    )}
                     {uniqueValues[sensitiveAttr].map((v) => (
                       <option key={v} value={v}>
-                        {v}
+                        {getGroupValueLabel(sensitiveAttr, v)}
                       </option>
                     ))}
                   </select>
@@ -449,9 +489,17 @@ export default function Upload({ onResult, onBack }: Props) {
                     onChange={(e) => setUnprivVal(e.target.value)}
                   >
                     <option value="">Select value</option>
+                    {aiData?.numerical_groups?.[sensitiveAttr]?.map((grp: string) => (
+                      <option key={grp} value={grp}>
+                        ✦ {grp}
+                      </option>
+                    ))}
+                    {aiData?.numerical_groups?.[sensitiveAttr] && (
+                      <option disabled>──────</option>
+                    )}
                     {uniqueValues[sensitiveAttr].map((v) => (
                       <option key={v} value={v}>
-                        {v}
+                        {getGroupValueLabel(sensitiveAttr, v)}
                       </option>
                     ))}
                   </select>
@@ -521,6 +569,7 @@ export default function Upload({ onResult, onBack }: Props) {
           </button>
         </section>
       </main>
+      </div>
     </div>
   );
 }
