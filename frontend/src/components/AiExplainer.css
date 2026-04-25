@@ -1,0 +1,132 @@
+.ai-explainer-narrative {
+  padding: 0 0 2.5rem 0;
+  animation: fadeUp 0.6s ease both;
+  animation-delay: 0.2s;
+}
+
+.ae-loading {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 14px;
+  color: var(--ink-faint);
+  font-family: var(--font-mono);
+}
+
+.ae-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 126, 84, 0.25); /* Using accent color for spinner */
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  display: inline-block;
+}
+
+.ae-error {
+  font-size: 13px;
+  color: var(--accent);
+}
+
+.ae-text {
+  font-size: 0.95rem;
+  color: var(--ink-muted);
+  line-height: 1.7;
+  font-weight: 300;
+}
+
+.ae-text p {
+  margin: 0 0 1rem;
+}
+
+.ae-text p:last-child {
+  margin-bottom: 0;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.ae-generate-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 100px;
+  padding: 0.6rem 1.4rem;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-bottom: 1.5rem;
+}
+
+.ae-generate-btn:hover {
+  background: var(--surface);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.ae-generate-btn svg {
+  color: var(--accent);
+}
+
+/* Code Box Styling */
+.ae-code-box {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  margin-top: 1rem;
+}
+
+.ae-code-header {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background: rgba(0, 0, 0, 0.03);
+  border-bottom: 1px solid var(--border);
+  gap: 0.4rem;
+}
+
+.ae-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.ae-dot.red { background: #ff5f56; }
+.ae-dot.yellow { background: #ffbd2e; }
+.ae-dot.green { background: #27c93f; }
+
+.ae-code-title {
+  margin-left: 0.5rem;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-faint);
+}
+
+.mono-font {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  padding: 1.5rem;
+  color: var(--ink);
+}
+
+.ae-cursor {
+  display: inline-block;
+  width: 8px;
+  height: 14px;
+  background: var(--accent);
+  margin-left: 2px;
+  vertical-align: middle;
+  animation: blink 1s step-end infinite;
+}
+
+@keyframes blink {
+  50% { opacity: 0; }
+}
