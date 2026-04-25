@@ -29,7 +29,10 @@ export default function Report({ result, onReset }: Props) {
     try {
       const r = await fixBias(result.session_id);
       setFixResult(r);
-      setTimeout(() => fixRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
+      setTimeout(
+        () => fixRef.current?.scrollIntoView({ behavior: "smooth" }),
+        100,
+      );
     } catch {
       setFixError("Fix failed. Please try again.");
     } finally {
@@ -38,13 +41,18 @@ export default function Report({ result, onReset }: Props) {
   };
 
   const scoreColor =
-    result.bias_score >= 70 ? "low" :
-    result.bias_score >= 40 ? "medium" : "high";
+    result.bias_score >= 70
+      ? "low"
+      : result.bias_score >= 40
+        ? "medium"
+        : "high";
 
   return (
     <div className={`report-page ${visible ? "visible" : ""}`}>
       <header className="report-header">
-        <button className="back-btn" onClick={onReset}>← new scan</button>
+        <button className="back-btn" onClick={onReset}>
+          ← new scan
+        </button>
         <span className="report-domain">{result.domain}</span>
       </header>
 
@@ -57,11 +65,15 @@ export default function Report({ result, onReset }: Props) {
 
       {/* Score + group chart side by side */}
       <section className="report-overview">
-        <BiasScore score={result.bias_score} severity={scoreColor} />
-        <GroupChart
-          stats={result.group_stats}
-          sensitiveAttr={result.sensitive_attr}
-        />
+        <div className="overview-score">
+          <BiasScore score={result.bias_score} severity={scoreColor} />
+        </div>
+        <div className="overview-chart">
+          <GroupChart
+            stats={result.group_stats}
+            sensitiveAttr={result.sensitive_attr}
+          />
+        </div>
       </section>
 
       {/* Metrics */}
@@ -81,12 +93,19 @@ export default function Report({ result, onReset }: Props) {
             <div>
               <div className="fix-cta-title">Ready to fix this?</div>
               <div className="fix-cta-sub">
-                We'll rebalance your dataset using Reweighing — the same technique used by IBM's AI Fairness 360.
+                We'll rebalance your dataset using Reweighing — the same
+                technique used by IBM's AI Fairness 360.
               </div>
             </div>
             {fixError && <div className="fix-error">{fixError}</div>}
             <button className="fix-btn" onClick={handleFix} disabled={fixing}>
-              {fixing ? <><span className="spinner dark" /> Applying fix…</> : "Fix bias →"}
+              {fixing ? (
+                <>
+                  <span className="spinner dark" /> Applying fix…
+                </>
+              ) : (
+                "Fix bias →"
+              )}
             </button>
           </div>
         </section>
@@ -97,7 +116,9 @@ export default function Report({ result, onReset }: Props) {
           <FixPanel
             before={result}
             fix={fixResult}
-            onDownload={() => window.open(downloadUrl(fixResult.download_token))}
+            onDownload={() =>
+              window.open(downloadUrl(fixResult.download_token))
+            }
           />
         </div>
       )}

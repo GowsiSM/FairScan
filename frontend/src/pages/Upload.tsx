@@ -9,10 +9,30 @@ interface Props {
 }
 
 const DOMAINS: { id: Domain; label: string; icon: string; hint: string }[] = [
-  { id: "hiring", label: "Hiring", icon: "◈", hint: "Job applications, résumé screening" },
-  { id: "lending", label: "Lending", icon: "◎", hint: "Loan approvals, credit decisions" },
-  { id: "healthcare", label: "Healthcare", icon: "◇", hint: "Treatment allocation, diagnostics" },
-  { id: "custom", label: "Custom", icon: "○", hint: "Any other decision system" },
+  {
+    id: "hiring",
+    label: "Hiring",
+    icon: "◈",
+    hint: "Job applications, résumé screening",
+  },
+  {
+    id: "lending",
+    label: "Lending",
+    icon: "◎",
+    hint: "Loan approvals, credit decisions",
+  },
+  {
+    id: "healthcare",
+    label: "Healthcare",
+    icon: "◇",
+    hint: "Treatment allocation, diagnostics",
+  },
+  {
+    id: "custom",
+    label: "Custom",
+    icon: "○",
+    hint: "Any other decision system",
+  },
 ];
 
 const DEMO_SETS = [
@@ -24,11 +44,13 @@ const DEMO_SETS = [
 export default function Upload({ onResult, onBack }: Props) {
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [domain, setDomain] = useState<Domain | null>(null);
-  
+
   const [file, setFile] = useState<File | null>(null);
   const [columns, setColumns] = useState<string[]>([]);
-  const [uniqueValues, setUniqueValues] = useState<Record<string, string[]>>({});
-  
+  const [uniqueValues, setUniqueValues] = useState<Record<string, string[]>>(
+    {},
+  );
+
   const [aiLoading, setAiLoading] = useState(false);
   const [aiData, setAiData] = useState<any>(null);
 
@@ -37,46 +59,49 @@ export default function Upload({ onResult, onBack }: Props) {
   const [privVal, setPrivVal] = useState("");
   const [unprivVal, setUnprivVal] = useState("");
   const [positiveLabel, setPositiveLabel] = useState("");
-  
+
   const [loading, setLoading] = useState(false);
   const [drag, setDrag] = useState(false);
   const [error, setError] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const handleFile = useCallback(async (f: File, overrideDomain?: Domain) => {
-    setFile(f);
-    setError("");
-    const activeDomain = overrideDomain || domain || "custom";
-    
-    try {
-      const { columns: cols, unique_values: uVals } = await getColumns(f);
-      setColumns(cols);
-      setUniqueValues(uVals);
-      
-      // Attempt AI Analysis
-      if (activeDomain !== "custom" && Object.keys(uVals).length > 0) {
-        setAiLoading(true);
-        try {
-          const aiRes = await analyzeColumns({
-            columns: cols,
-            unique_values: uVals,
-            domain: activeDomain,
-            provider: "gemini"
-          });
-          setAiData(aiRes);
-        } catch(err) {
-          console.warn("AI extraction failed, ignoring", err);
-        } finally {
-          setAiLoading(false);
+  const handleFile = useCallback(
+    async (f: File, overrideDomain?: Domain) => {
+      setFile(f);
+      setError("");
+      const activeDomain = overrideDomain || domain || "custom";
+
+      try {
+        const { columns: cols, unique_values: uVals } = await getColumns(f);
+        setColumns(cols);
+        setUniqueValues(uVals);
+
+        // Attempt AI Analysis
+        if (activeDomain !== "custom" && Object.keys(uVals).length > 0) {
+          setAiLoading(true);
+          try {
+            const aiRes = await analyzeColumns({
+              columns: cols,
+              unique_values: uVals,
+              domain: activeDomain,
+              provider: "gemini",
+            });
+            setAiData(aiRes);
+          } catch (err) {
+            console.warn("AI extraction failed, ignoring", err);
+          } finally {
+            setAiLoading(false);
+            setStep(3);
+          }
+        } else {
           setStep(3);
         }
-      } else {
-        setStep(3);
+      } catch {
+        setError("Could not read columns. Make sure it's a valid CSV.");
       }
-    } catch {
-      setError("Could not read columns. Make sure it's a valid CSV.");
-    }
-  }, [domain]);
+    },
+    [domain],
+  );
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
@@ -86,13 +111,27 @@ export default function Upload({ onResult, onBack }: Props) {
   };
 
   const handleSubmit = async () => {
-    if (!file || !sensitiveAttr || !labelCol || !privVal || !unprivVal || !domain || !positiveLabel)
+    if (
+      !file ||
+      !sensitiveAttr ||
+      !labelCol ||
+      !privVal ||
+      !unprivVal ||
+      !domain ||
+      !positiveLabel
+    )
       return;
     setLoading(true);
     setError("");
     try {
       const result = await analyze(
-        file, sensitiveAttr, labelCol, privVal, unprivVal, domain, positiveLabel
+        file,
+        sensitiveAttr,
+        labelCol,
+        privVal,
+        unprivVal,
+        domain,
+        positiveLabel,
       );
       onResult(result);
     } catch {
@@ -101,7 +140,10 @@ export default function Upload({ onResult, onBack }: Props) {
     }
   };
 
-  const availableDemos = domain === "custom" ? DEMO_SETS : DEMO_SETS.filter(d => d.domain === domain);
+  const availableDemos =
+    domain === "custom"
+      ? DEMO_SETS
+      : DEMO_SETS.filter((d) => d.domain === domain);
 
   // Helper to append AI annotations softly
   const getColLabel = (col: string) => {
@@ -110,7 +152,7 @@ export default function Upload({ onResult, onBack }: Props) {
     }
     return col;
   };
-  
+
   const getOutcomeValueLabel = (val: string) => {
     if (labelCol && aiData?.outcome_values?.[labelCol]?.[val]) {
       return `${val} (${aiData.outcome_values[labelCol][val]})`;
@@ -133,10 +175,12 @@ export default function Upload({ onResult, onBack }: Props) {
       const outCol = Object.keys(aiData.outcome_values || {})[0];
       if (outCol && columns.includes(outCol)) {
         setLabelCol(outCol);
-        
+
         // Find positive/impacted values
         const vals = aiData.outcome_values[outCol];
-        const posVal = Object.keys(vals).find(v => vals[v] === "not impacted");
+        const posVal = Object.keys(vals).find(
+          (v) => vals[v] === "not impacted",
+        );
         if (posVal) setPositiveLabel(posVal);
       }
 
@@ -149,7 +193,9 @@ export default function Upload({ onResult, onBack }: Props) {
     if (!sensitiveAttr) return type === "priv" ? "e.g. Male" : "e.g. Female";
     const values = uniqueValues[sensitiveAttr];
     if (values && values.length > 0) {
-      return type === "priv" ? `e.g. ${values[0]}` : `e.g. ${values[1] || values[0]}`;
+      return type === "priv"
+        ? `e.g. ${values[0]}`
+        : `e.g. ${values[1] || values[0]}`;
     }
     return `Enter ${type} group`;
   };
@@ -171,19 +217,35 @@ export default function Upload({ onResult, onBack }: Props) {
 
       <main className="upload-main">
         {/* Step 1 — Domain */}
-        <section className={`step-block ${step === 1 ? "current" : "done"}`} onClick={() => step !== 1 && setStep(1)}>
+        <section
+          className={`step-block ${step === 1 ? "current" : "done"}`}
+          onClick={() => step !== 1 && setStep(1)}
+        >
           <div className="step-meta">
             <span className="step-num">01</span>
             <span className="step-label">Context</span>
           </div>
           <h2 className="step-title">What kind of decisions?</h2>
-          
+
+          {domain && (
+            <div className="step-summary">
+              <span className="summary-label">Selected:</span>
+              <span className="summary-value">
+                {DOMAINS.find((d) => d.id === domain)?.label}
+              </span>
+            </div>
+          )}
+
           <div className="domain-grid">
             {DOMAINS.map((d) => (
               <button
                 key={d.id}
                 className={`domain-card ${domain === d.id ? "selected" : ""}`}
-                onClick={(e) => { e.stopPropagation(); setDomain(d.id); setStep(2); }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setDomain(d.id);
+                  setStep(2);
+                }}
               >
                 <span className="domain-icon">{d.icon}</span>
                 <span className="domain-label">{d.label}</span>
@@ -194,21 +256,31 @@ export default function Upload({ onResult, onBack }: Props) {
         </section>
 
         {/* Step 2 — File */}
-        <section className={`step-block ${step === 2 ? "current" : step > 2 ? "done" : "pending"}`} onClick={() => step > 2 && setStep(2)}>
+        <section
+          className={`step-block ${step === 2 ? "current" : step > 2 ? "done" : "pending"}`}
+          onClick={() => step > 2 && setStep(2)}
+        >
           <div className="step-meta">
             <span className="step-num">02</span>
             <span className="step-label">Dataset</span>
           </div>
           <h2 className="step-title">Upload your CSV</h2>
-          
+
+          {file && (
+            <div className="step-summary">
+              <span className="summary-label">File:</span>
+              <span className="summary-value">{file.name}</span>
+            </div>
+          )}
+
           {aiLoading && columns.length > 0 ? (
             <div className="scanning-container fade-in">
               <div className="csv-table-preview">
                 <div className="csv-table-header">
                   {columns.map((col, idx) => (
-                    <div 
-                      key={col} 
-                      className="csv-col" 
+                    <div
+                      key={col}
+                      className="csv-col"
                       style={{ animationDelay: `${idx * 0.15}s` }}
                     >
                       {col}
@@ -228,7 +300,10 @@ export default function Upload({ onResult, onBack }: Props) {
             <>
               <div
                 className={`dropzone ${drag ? "dragging" : ""}`}
-                onDragOver={(e) => { e.preventDefault(); setDrag(true); }}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setDrag(true);
+                }}
                 onDragLeave={() => setDrag(false)}
                 onDrop={handleDrop}
                 onClick={() => inputRef.current?.click()}
@@ -238,7 +313,9 @@ export default function Upload({ onResult, onBack }: Props) {
                   type="file"
                   accept=".csv"
                   style={{ display: "none" }}
-                  onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])}
+                  onChange={(e) =>
+                    e.target.files?.[0] && handleFile(e.target.files[0])
+                  }
                 />
                 <span className="drop-icon">↑</span>
                 <span className="drop-text">Drop CSV here</span>
@@ -255,7 +332,10 @@ export default function Upload({ onResult, onBack }: Props) {
                       try {
                         const res = await fetch(`/demo-datasets/${d.file}`);
                         const blob = await res.blob();
-                        handleFile(new File([blob], d.file, { type: "text/csv" }), d.domain as Domain);
+                        handleFile(
+                          new File([blob], d.file, { type: "text/csv" }),
+                          d.domain as Domain,
+                        );
                       } catch {
                         setError("Demo dataset not found.");
                       }
@@ -276,31 +356,62 @@ export default function Upload({ onResult, onBack }: Props) {
             <span className="step-label">Configure</span>
           </div>
           <h2 className="step-title">Map columns</h2>
-          
+
+          {sensitiveAttr && labelCol && (
+            <div className="step-summary">
+              <span className="summary-label">Sensitive:</span>
+              <span className="summary-value">{sensitiveAttr}</span>
+              <span className="summary-label">Outcome:</span>
+              <span className="summary-value">{labelCol}</span>
+            </div>
+          )}
+
           {aiLoading && (
             <div className="ai-loading">
-              <span className="spinner" style={{width: 12, height: 12, borderWidth: 2, borderColor: 'var(--brand)', borderTopColor: 'transparent'}} />
+              <span
+                className="spinner"
+                style={{
+                  width: 12,
+                  height: 12,
+                  borderWidth: 2,
+                  borderColor: "var(--brand)",
+                  borderTopColor: "transparent",
+                }}
+              />
               AI is analyzing dataset context...
             </div>
           )}
 
           <div className="fields">
             <label className="field">
-              <span className="field-label">Sensitive attribute {aiData && <span className="ai-badge">★ AI mapped</span>}</span>
-              <select value={sensitiveAttr} onChange={(e) => setSensitiveAttr(e.target.value)}>
+              <span className="field-label">
+                Sensitive attribute{" "}
+                {aiData && <span className="ai-badge">★ AI mapped</span>}
+              </span>
+              <select
+                value={sensitiveAttr}
+                onChange={(e) => setSensitiveAttr(e.target.value)}
+              >
                 <option value="">Select column</option>
                 {columns.map((c) => (
-                  <option key={c} value={c}>{getColLabel(c)}</option>
+                  <option key={c} value={c}>
+                    {getColLabel(c)}
+                  </option>
                 ))}
               </select>
             </label>
 
             <label className="field">
               <span className="field-label">Outcome column</span>
-              <select value={labelCol} onChange={(e) => setLabelCol(e.target.value)}>
+              <select
+                value={labelCol}
+                onChange={(e) => setLabelCol(e.target.value)}
+              >
                 <option value="">Select column</option>
                 {columns.map((c) => (
-                  <option key={c} value={c}>{c}</option>
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
                 ))}
               </select>
             </label>
@@ -309,49 +420,104 @@ export default function Upload({ onResult, onBack }: Props) {
               <label className="field half">
                 <span className="field-label">Privileged group value</span>
                 {uniqueValues[sensitiveAttr] ? (
-                  <select value={privVal} onChange={e => setPrivVal(e.target.value)}>
+                  <select
+                    value={privVal}
+                    onChange={(e) => setPrivVal(e.target.value)}
+                  >
                     <option value="">Select value</option>
-                    {uniqueValues[sensitiveAttr].map(v => <option key={v} value={v}>{v}</option>)}
+                    {uniqueValues[sensitiveAttr].map((v) => (
+                      <option key={v} value={v}>
+                        {v}
+                      </option>
+                    ))}
                   </select>
                 ) : (
-                  <input type="text" value={privVal} onChange={(e) => setPrivVal(e.target.value)} placeholder={getGroupPlaceholder("priv")} />
+                  <input
+                    type="text"
+                    value={privVal}
+                    onChange={(e) => setPrivVal(e.target.value)}
+                    placeholder={getGroupPlaceholder("priv")}
+                  />
                 )}
               </label>
-              
+
               <label className="field half">
                 <span className="field-label">Unprivileged group value</span>
                 {uniqueValues[sensitiveAttr] ? (
-                  <select value={unprivVal} onChange={e => setUnprivVal(e.target.value)}>
+                  <select
+                    value={unprivVal}
+                    onChange={(e) => setUnprivVal(e.target.value)}
+                  >
                     <option value="">Select value</option>
-                    {uniqueValues[sensitiveAttr].map(v => <option key={v} value={v}>{v}</option>)}
+                    {uniqueValues[sensitiveAttr].map((v) => (
+                      <option key={v} value={v}>
+                        {v}
+                      </option>
+                    ))}
                   </select>
                 ) : (
-                  <input type="text" value={unprivVal} onChange={(e) => setUnprivVal(e.target.value)} placeholder={getGroupPlaceholder("unpriv")} />
+                  <input
+                    type="text"
+                    value={unprivVal}
+                    onChange={(e) => setUnprivVal(e.target.value)}
+                    placeholder={getGroupPlaceholder("unpriv")}
+                  />
                 )}
               </label>
             </div>
 
             <label className="field">
-              <span className="field-label">Positive outcome value {aiData && labelCol && <span className="ai-badge">★ AI impacted check</span>}</span>
+              <span className="field-label">
+                Positive outcome value{" "}
+                {aiData && labelCol && (
+                  <span className="ai-badge">★ AI impacted check</span>
+                )}
+              </span>
               {uniqueValues[labelCol] ? (
-                <select value={positiveLabel} onChange={e => setPositiveLabel(e.target.value)}>
+                <select
+                  value={positiveLabel}
+                  onChange={(e) => setPositiveLabel(e.target.value)}
+                >
                   <option value="">Select value</option>
-                  {uniqueValues[labelCol].map(v => (
-                    <option key={v} value={v}>{getOutcomeValueLabel(v)}</option>
+                  {uniqueValues[labelCol].map((v) => (
+                    <option key={v} value={v}>
+                      {getOutcomeValueLabel(v)}
+                    </option>
                   ))}
                 </select>
               ) : (
-                <input type="text" value={positiveLabel} onChange={(e) => setPositiveLabel(e.target.value)} placeholder="e.g. 1" />
+                <input
+                  type="text"
+                  value={positiveLabel}
+                  onChange={(e) => setPositiveLabel(e.target.value)}
+                  placeholder="e.g. 1"
+                />
               )}
             </label>
           </div>
 
           {error && <div className="upload-error">{error}</div>}
 
-          <button className="analyze-btn" onClick={handleSubmit} disabled={loading || !sensitiveAttr || !labelCol || !privVal || !unprivVal || !positiveLabel || aiLoading}>
+          <button
+            className="analyze-btn"
+            onClick={handleSubmit}
+            disabled={
+              loading ||
+              !sensitiveAttr ||
+              !labelCol ||
+              !privVal ||
+              !unprivVal ||
+              !positiveLabel ||
+              aiLoading
+            }
+          >
             {loading ? (
-              <span className="analyzing"><span className="spinner" /> Scanning for bias…</span>
-            ) : "Run analysis →"}
+              <span className="analyzing">
+                <span className="spinner" /> Scanning for bias…
+              </span>
+            ) : (
+              "Run analysis →"
+            )}
           </button>
         </section>
       </main>

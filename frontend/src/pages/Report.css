@@ -3,7 +3,9 @@
   background: var(--surface);
   opacity: 0;
   transform: translateY(10px);
-  transition: opacity 0.5s ease, transform 0.5s ease;
+  transition:
+    opacity 0.5s ease,
+    transform 0.5s ease;
 }
 
 .report-page.visible {
@@ -59,11 +61,25 @@
   max-width: 520px;
 }
 
-/* Overview row */
+/* ── Overview row: score left, chart right ── */
 .report-overview {
   display: grid;
-  grid-template-columns: 280px 1fr;
+  grid-template-columns: 220px 1fr;
   border-bottom: 1px solid var(--border);
+}
+
+.overview-score {
+  padding: 3rem 2rem;
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+}
+
+.overview-chart {
+  padding: 3rem 3rem;
 }
 
 /* Metrics */
@@ -139,11 +155,16 @@
   flex-shrink: 0;
 }
 
-.fix-btn:hover { opacity: 0.82; }
-.fix-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+.fix-btn:hover {
+  opacity: 0.82;
+}
+.fix-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
 
 .spinner.dark {
-  border-color: rgba(255,255,255,0.25);
+  border-color: rgba(255, 255, 255, 0.25);
   border-top-color: #fff;
   width: 13px;
   height: 13px;
@@ -153,12 +174,47 @@
   animation: spin 0.7s linear infinite;
 }
 
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 900px) {
+  .metrics-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
 @media (max-width: 700px) {
-  .report-header { padding: 1.2rem 1.5rem; }
-  .report-hero { padding: 2.5rem 1.5rem; }
-  .report-overview { grid-template-columns: 1fr; }
-  .report-metrics { padding: 2rem 1.5rem; }
-  .metrics-grid { grid-template-columns: 1fr; }
-  .fix-cta-section { padding: 1.5rem; }
-  .fix-cta-inner { flex-direction: column; align-items: flex-start; }
+  .report-header {
+    padding: 1.2rem 1.5rem;
+  }
+  .report-hero {
+    padding: 2.5rem 1.5rem;
+  }
+  .report-overview {
+    grid-template-columns: 1fr;
+  }
+  .overview-score {
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    padding: 2rem 1.5rem;
+  }
+  .overview-chart {
+    padding: 2rem 1.5rem;
+  }
+  .report-metrics {
+    padding: 2rem 1.5rem;
+  }
+  .metrics-grid {
+    grid-template-columns: 1fr;
+  }
+  .fix-cta-section {
+    padding: 1.5rem;
+  }
+  .fix-cta-inner {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 }
