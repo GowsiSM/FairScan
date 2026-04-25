@@ -51,6 +51,8 @@ async def analyze(
     unprivileged_name_override: str | None = Form(default=None),
     positive_label: str = Form("1"),
     domain: str = Form("hiring"),
+    analysis_type: str = Form("dataset"),
+    prediction_col: str | None = Form(default=None),
 ) -> dict:
     sensitive_target = sensitive_col or sensitive_attr
     privileged_target = privileged_val or privileged_value
@@ -60,6 +62,8 @@ async def analyze(
         return {"detail": "Provide sensitive_col (or sensitive_attr)."}
     if privileged_target is None:
         return {"detail": "Provide privileged_val (or privileged_value)."}
+    if analysis_type == "model" and not prediction_col:
+        return {"detail": "prediction_col is required for model analysis."}
 
     df = await parse_csv_upload(file)
     prepared = prepare_binary_dataset(
@@ -69,9 +73,10 @@ async def analyze(
         privileged_val=privileged_target,
         positive_label=positive_label,
         unprivileged_val=unprivileged_target,
+        prediction_col=prediction_col if analysis_type == "model" else None,
     )
 
-    metrics = compute_metrics(prepared)
+    metrics = compute_metrics(prepared, analysis_type=analysis_type)
     bias_score, verdict = score_bias(
         metrics["disparate_impact"],
         metrics["stat_parity_diff"],
@@ -87,7 +92,8 @@ async def analyze(
         equal_opp_diff=metrics["equal_opp_diff"],
         privileged_label=privileged_name,
         unprivileged_label=unprivileged_name,
-        outcome_label=label_col,
+        outcome_label=prediction_col if analysis_type == "model" else label_col,
+        analysis_type=analysis_type,
     )
 
     session_id = str(uuid4())
@@ -143,13 +149,18 @@ async def analyze(
         direction_word = "more"
         prob_gap = round((di - 1) * 100)
 
-    verb_label = label_col.lower().replace("be ", "")
-    headline = f"{unprivileged_name} are {prob_gap}% {direction_word} likely to be {verb_label}."
-    summary = f"Your dataset shows a significant fairness gap. {unprivileged_name} are {verb_label} at a rate well below the 80% threshold compared to {privileged_name}. This pattern suggests systematic disadvantage."
+    verb_label = (prediction_col if analysis_type == "model" else label_col).lower().replace("be ", "")
+    
+    if analysis_type == "model":
+        headline = f"The model is {prob_gap}% {direction_word} likely to predict '{verb_label}' for {unprivileged_name}."
+        summary = f"Your model exhibits predictive bias. It predicts positive outcomes for {unprivileged_name} at a rate well below the 80% threshold compared to {privileged_name}. This suggests the model has learned or amplified historical disadvantages."
+    else:
+        headline = f"{unprivileged_name} are {prob_gap}% {direction_word} likely to be {verb_label}."
+        summary = f"Your dataset shows a significant fairness gap. {unprivileged_name} are {verb_label} at a rate well below the 80% threshold compared to {privileged_name}. This pattern suggests systematic disadvantage."
 
     # Compute bias root cause — feature importance analysis
     try:
-        bias_contributors = compute_feature_importance(prepared)
+        bias_contributors = compute_feature_importance(prepared, analysis_type=analysis_type)
     except Exception:
         bias_contributors = []
 
@@ -167,6 +178,7 @@ async def analyze(
         "headline": headline,
         "summary": summary,
         "bias_contributors": bias_contributors,
+        "analysis_type": analysis_type,
     }
 
     set_session(
@@ -181,6 +193,8 @@ async def analyze(
                 "unprivileged_val": prepared.unprivileged_val,
                 "positive_label": prepared.positive_label,
                 "domain": domain,
+                "prediction_col": prepared.prediction_col,
+                "analysis_type": analysis_type,
             },
         ),
     )

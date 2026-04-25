@@ -24,6 +24,8 @@ class PreparedData:
     privileged_val: str
     unprivileged_val: str
     positive_label: str
+    prediction_col: str | None = None
+    pred_dataset: BinaryLabelDataset | None = None
 
 
 async def parse_csv_upload(file: UploadFile) -> pd.DataFrame:
@@ -95,6 +97,7 @@ def prepare_binary_dataset(
     privileged_val: str,
     positive_label: str,
     unprivileged_val: str | None,
+    prediction_col: str | None = None,
 ) -> PreparedData:
     if label_col not in df.columns:
         raise HTTPException(
@@ -178,6 +181,22 @@ def prepare_binary_dataset(
         protected_attribute_names=[sensitive_col],
     )
 
+    pred_dataset = None
+    if prediction_col:
+        if prediction_col not in df_filtered.columns:
+            raise HTTPException(
+                status_code=400, detail=f"prediction_col '{prediction_col}' not found."
+            )
+        df_pred = df_filtered.copy()
+        pred_label_filtered = _as_text(df_pred[prediction_col])
+        df_pred[prediction_col] = (pred_label_filtered == positive_label).astype(int)
+        df_pred[sensitive_col] = priv_mask_filtered.astype(int)
+        pred_dataset = BinaryLabelDataset(
+            df=df_pred,
+            label_names=[prediction_col],
+            protected_attribute_names=[sensitive_col],
+        )
+
     return PreparedData(
         df_original=df_filtered,
         dataset=dataset,
@@ -188,6 +207,8 @@ def prepare_binary_dataset(
         privileged_val=privileged_val,
         unprivileged_val=inferred_unpriv,
         positive_label=positive_label,
+        prediction_col=prediction_col,
+        pred_dataset=pred_dataset,
     )
 
 
@@ -223,16 +244,38 @@ def _equal_opp_diff_from_model(
     return float(class_metric.equal_opportunity_difference())
 
 
-def compute_metrics(prepared: PreparedData) -> dict[str, Any]:
-    metric = BinaryLabelDatasetMetric(
-        prepared.dataset,
-        privileged_groups=prepared.privileged_groups,
-        unprivileged_groups=prepared.unprivileged_groups,
-    )
+def compute_metrics(prepared: PreparedData, analysis_type: str = "dataset") -> dict[str, Any]:
+    if analysis_type == "model" and prepared.pred_dataset is not None:
+        # For model predictions, calculate metrics on the predicted labels
+        metric = BinaryLabelDatasetMetric(
+            prepared.pred_dataset,
+            privileged_groups=prepared.privileged_groups,
+            unprivileged_groups=prepared.unprivileged_groups,
+        )
+        di = float(metric.disparate_impact())
+        spd = float(metric.statistical_parity_difference())
 
-    di = float(metric.disparate_impact())
-    spd = float(metric.statistical_parity_difference())
-    eod = _equal_opp_diff_from_model(prepared)
+        # Equal Opportunity is True Positive Rate diff
+        # We can calculate this directly comparing true labels vs predicted labels
+        class_metric = ClassificationMetric(
+            prepared.dataset,
+            prepared.pred_dataset,
+            privileged_groups=prepared.privileged_groups,
+            unprivileged_groups=prepared.unprivileged_groups,
+        )
+        eod = float(class_metric.equal_opportunity_difference())
+
+    else:
+        # For dataset historical bias, calculate metrics on the ground truth
+        metric = BinaryLabelDatasetMetric(
+            prepared.dataset,
+            privileged_groups=prepared.privileged_groups,
+            unprivileged_groups=prepared.unprivileged_groups,
+        )
+        di = float(metric.disparate_impact())
+        spd = float(metric.statistical_parity_difference())
+        # We train a proxy model to find EOD if there are no predictions
+        eod = _equal_opp_diff_from_model(prepared)
 
     priv_instances = metric.num_instances(privileged=True)
     unpriv_instances = metric.num_instances(privileged=False)
@@ -271,16 +314,22 @@ def compute_metrics(prepared: PreparedData) -> dict[str, Any]:
     }
 
 
-def compute_feature_importance(prepared: PreparedData) -> list[dict[str, Any]]:
+def compute_feature_importance(prepared: PreparedData, analysis_type: str = "dataset") -> list[dict[str, Any]]:
     """Identify which features contribute most to the bias gap."""
     df = prepared.df_original.copy()
+    
+    target_col = prepared.prediction_col if analysis_type == "model" and prepared.prediction_col else prepared.label_col
+    
     label_binary = (
-        (_as_text(df[prepared.label_col]) == prepared.positive_label)
+        (_as_text(df[target_col]) == prepared.positive_label)
         .astype(int)
         .to_numpy()
     )
 
-    feature_df = df.drop(columns=[prepared.label_col])
+    feature_df = df.drop(columns=[target_col])
+    if target_col != prepared.label_col:
+        feature_df = feature_df.drop(columns=[prepared.label_col], errors='ignore')
+        
     x = pd.get_dummies(feature_df, drop_first=False)
 
     if len(np.unique(label_binary)) < 2:

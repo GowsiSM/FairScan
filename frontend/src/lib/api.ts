@@ -25,6 +25,8 @@ export async function analyze(
   positiveLabel: string = "1",
   privilegedName?: string,
   unprivilegedName?: string,
+  analysisType: "dataset" | "model" = "dataset",
+  predictionCol?: string,
 ) {
   if (USE_MOCK) {
     const { mockAnalyze } = await import("./mockApi");
@@ -38,6 +40,8 @@ export async function analyze(
   form.append("unprivileged_val", unprivilegedValue);
   form.append("positive_label", positiveLabel);
   form.append("domain", domain);
+  form.append("analysis_type", analysisType);
+  if (predictionCol) form.append("prediction_col", predictionCol);
   if (privilegedName) form.append("privileged_name_override", privilegedName);
   if (unprivilegedName) form.append("unprivileged_name_override", unprivilegedName);
   const res = await fetch(`${BASE}/analyze`, { method: "POST", body: form });

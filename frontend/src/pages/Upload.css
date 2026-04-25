@@ -738,3 +738,31 @@ input[type="text"]:focus {
   text-align: center;
   animation: pulse 1.5s infinite alternate ease-in-out;
 }
+
+.model-instructions {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-top: 1rem;
+}
+
+.instruction-list {
+  margin: 1rem 0 0 1.5rem;
+  color: var(--ink);
+  font-size: 0.95rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.instruction-list li {
+  line-height: 1.4;
+}
+
+.instruction-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+  flex-wrap: wrap;
+}

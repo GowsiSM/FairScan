@@ -44,6 +44,7 @@ def build_explanations(
     privileged_label: str,
     unprivileged_label: str,
     outcome_label: str,
+    analysis_type: str = "dataset",
 ) -> dict[str, str]:
     di_percent = round(disparate_impact * 100)
     spd_percent = round(abs(stat_parity_diff) * 100)
@@ -51,8 +52,26 @@ def build_explanations(
 
     # Clean outcome label (e.g. "hired" -> "be hired")
     verb_label = outcome_label.lower().strip()
-    if not verb_label.startswith("be "):
+    if not verb_label.startswith("be ") and analysis_type == "dataset":
         verb_label = f"be {verb_label}"
+
+    if analysis_type == "model":
+        return {
+            "disparate_impact": (
+                f"The model predicts '{verb_label}' for {unprivileged_label} at {di_percent}% "
+                f"the rate of {privileged_label}."
+            ),
+            "stat_parity_diff": f"There is a {spd_percent}% gap in the model's positive prediction rate between groups.",
+            "equal_opp_diff": (
+                f"For qualified individuals, the model predicts '{verb_label}' for {unprivileged_label} {eod_percent}% less often than "
+                f"for {privileged_label}."
+                if equal_opp_diff < 0
+                else (
+                    f"For qualified individuals, the model predicts '{verb_label}' for {unprivileged_label} {eod_percent}% more often than "
+                    f"for {privileged_label}."
+                )
+            ),
+        }
 
     return {
         "disparate_impact": (

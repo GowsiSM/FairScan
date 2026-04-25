@@ -45,6 +45,25 @@ const CustomIcon = () => (
   </svg>
 );
 
+const DatasetIcon = () => (
+  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M3 3v18h18" />
+    <path d="M18 17V9" />
+    <path d="M13 17V5" />
+    <path d="M8 17v-3" />
+  </svg>
+);
+
+const ModelIcon = () => (
+  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="11" width="18" height="10" rx="2" />
+    <circle cx="12" cy="5" r="2" />
+    <path d="M12 7v4" />
+    <line x1="8" y1="16" x2="8" y2="16.01" />
+    <line x1="16" y1="16" x2="16" y2="16.01" />
+  </svg>
+);
+
 const DOMAINS: { id: Domain; label: string; icon: ReactNode; hint: string }[] = [
   {
     id: "hiring",
@@ -79,8 +98,9 @@ const DEMO_SETS = [
 ];
 
 export default function Upload({ onResult, onBack }: Props) {
-  const [step, setStep] = useState<1 | 2 | 3>(1);
+  const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
   const [domain, setDomain] = useState<Domain | null>(null);
+  const [analysisType, setAnalysisType] = useState<"dataset" | "model">("dataset");
 
   const [file, setFile] = useState<File | null>(null);
   const [columns, setColumns] = useState<string[]>([]);
@@ -93,6 +113,7 @@ export default function Upload({ onResult, onBack }: Props) {
 
   const [sensitiveAttr, setSensitiveAttr] = useState("");
   const [labelCol, setLabelCol] = useState("");
+  const [predictionCol, setPredictionCol] = useState("");
   const [privVal, setPrivVal] = useState("");
   const [unprivVal, setUnprivVal] = useState("");
   const [positiveLabel, setPositiveLabel] = useState("");
@@ -128,10 +149,10 @@ export default function Upload({ onResult, onBack }: Props) {
             console.warn("AI extraction failed, ignoring", err);
           } finally {
             setAiLoading(false);
-            setStep(3);
+            setStep(4);
           }
         } else {
-          setStep(3);
+          setStep(4);
         }
       } catch {
         setError("Could not read columns. Make sure it's a valid CSV.");
@@ -156,6 +177,7 @@ export default function Upload({ onResult, onBack }: Props) {
       !file ||
       !sensitiveAttr ||
       !labelCol ||
+      (analysisType === "model" && !predictionCol) ||
       !privVal ||
       !unprivVal ||
       !domain ||
@@ -178,6 +200,8 @@ export default function Upload({ onResult, onBack }: Props) {
         positiveLabel,
         privName,
         unprivName,
+        analysisType,
+        predictionCol,
       );
       onResult(result);
     } catch {
@@ -265,8 +289,9 @@ export default function Upload({ onResult, onBack }: Props) {
           <div className="vertical-step-indicator">
             {[
               { num: 1, label: "Context", click: () => step !== 1 && setStep(1), clickable: step !== 1 },
-              { num: 2, label: "Dataset", click: () => step > 2 && setStep(2), clickable: step > 2 },
-              { num: 3, label: "Configure", click: undefined, clickable: false }
+              { num: 2, label: "Analysis", click: () => step > 2 && setStep(2), clickable: step > 2 },
+              { num: 3, label: "Dataset", click: () => step > 3 && setStep(3), clickable: step > 3 },
+              { num: 4, label: "Configure", click: undefined, clickable: false }
             ].map(s => (
               <div 
                 key={s.num} 
@@ -324,13 +349,52 @@ export default function Upload({ onResult, onBack }: Props) {
           </div>
         </section>
 
-        {/* Step 2 — File */}
+        {/* Step 2 — Analysis Type */}
         <section
           className={`step-block ${step === 2 ? "current" : step > 2 ? "done" : "pending"}`}
           onClick={() => step > 2 && setStep(2)}
         >
           <div className="step-meta">
             <span className="step-num">02</span>
+            <span className="step-label">Analysis Type</span>
+          </div>
+          <h2 className="step-title">What are you analyzing?</h2>
+
+          <div className="domain-grid">
+            <button
+              className={`domain-card ${analysisType === "dataset" ? "selected" : ""}`}
+              onClick={(e) => {
+                e.stopPropagation();
+                setAnalysisType("dataset");
+                setStep(3);
+              }}
+            >
+              <span className="domain-icon"><DatasetIcon /></span>
+              <span className="domain-label">Training Data</span>
+              <span className="domain-hint">Analyze raw dataset for historical bias</span>
+            </button>
+            <button
+              className={`domain-card ${analysisType === "model" ? "selected" : ""}`}
+              onClick={(e) => {
+                e.stopPropagation();
+                setAnalysisType("model");
+                setStep(3);
+              }}
+            >
+              <span className="domain-icon"><ModelIcon /></span>
+              <span className="domain-label">Model Predictions</span>
+              <span className="domain-hint">Analyze model outputs for predictive bias</span>
+            </button>
+          </div>
+        </section>
+
+        {/* Step 3 — File */}
+        <section
+          className={`step-block ${step === 3 ? "current" : step > 3 ? "done" : "pending"}`}
+          onClick={() => step > 3 && setStep(3)}
+        >
+          <div className="step-meta">
+            <span className="step-num">03</span>
             <span className="step-label">Dataset</span>
           </div>
           <h2 className="step-title">Upload your CSV</h2>
@@ -390,38 +454,69 @@ export default function Upload({ onResult, onBack }: Props) {
                 <span className="drop-text">Drop CSV here</span>
               </div>
 
-              <div className="demo-row">
-                <span className="demo-label">Or try a demo:</span>
-                {availableDemos.map((d) => (
-                  <button
-                    key={d.file}
-                    className="demo-chip"
-                    onClick={async (e) => {
-                      e.stopPropagation();
-                      try {
-                        const res = await fetch(`/demo-datasets/${d.file}`);
-                        const blob = await res.blob();
-                        handleFile(
-                          new File([blob], d.file, { type: "text/csv" }),
-                          d.domain as Domain,
-                        );
-                      } catch {
-                        setError("Demo dataset not found.");
-                      }
-                    }}
-                  >
-                    {d.label}
-                  </button>
-                ))}
-              </div>
+              {analysisType === "dataset" ? (
+                <div className="demo-row">
+                  <span className="demo-label">Or try a demo:</span>
+                  {availableDemos.map((d) => (
+                    <button
+                      key={d.file}
+                      className="demo-chip"
+                      onClick={async (e) => {
+                        e.stopPropagation();
+                        try {
+                          const res = await fetch(`/demo-datasets/${d.file}`);
+                          const blob = await res.blob();
+                          handleFile(
+                            new File([blob], d.file, { type: "text/csv" }),
+                            d.domain as Domain,
+                          );
+                        } catch {
+                          setError("Demo dataset not found.");
+                        }
+                      }}
+                    >
+                      {d.label}
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <div className="model-instructions">
+                  <span className="demo-label">How to analyze your model:</span>
+                  <ol className="instruction-list">
+                    <li>
+                      Download a test dataset:
+                      <div className="instruction-actions">
+                        {availableDemos.map((d) => (
+                          <button
+                            key={d.file}
+                            className="demo-chip outline"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const a = document.createElement("a");
+                              a.href = `/demo-datasets/${d.file}`;
+                              a.download = d.file;
+                              a.click();
+                            }}
+                          >
+                            Download {d.label} CSV
+                          </button>
+                        ))}
+                      </div>
+                    </li>
+                    <li>Run your model on the downloaded CSV to generate predictions.</li>
+                    <li>Add your predictions to the CSV as a new column.</li>
+                    <li>Upload the modified CSV above.</li>
+                  </ol>
+                </div>
+              )}
             </>
           )}
         </section>
 
-        {/* Step 3 — Columns */}
-        <section className={`step-block ${step === 3 ? "current" : "pending"}`}>
+        {/* Step 4 — Columns */}
+        <section className={`step-block ${step === 4 ? "current" : "pending"}`}>
           <div className="step-meta">
-            <span className="step-num">03</span>
+            <span className="step-num">04</span>
             <span className="step-label">Configure</span>
           </div>
           <h2 className="step-title">Map columns</h2>
@@ -470,20 +565,41 @@ export default function Upload({ onResult, onBack }: Props) {
               </select>
             </label>
 
-            <label className="field">
-              <span className="field-label">Outcome column</span>
-              <select
-                value={labelCol}
-                onChange={(e) => setLabelCol(e.target.value)}
-              >
-                <option value="">Select column</option>
-                {columns.map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <div className="field-row">
+              <label className={`field ${analysisType === 'model' ? 'half' : ''}`}>
+                <span className="field-label">
+                  {analysisType === "model" ? "Ground truth column" : "Outcome column"}
+                </span>
+                <select
+                  value={labelCol}
+                  onChange={(e) => setLabelCol(e.target.value)}
+                >
+                  <option value="">Select column</option>
+                  {columns.map((c) => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              {analysisType === "model" && (
+                <label className="field half">
+                  <span className="field-label">Prediction column</span>
+                  <select
+                    value={predictionCol}
+                    onChange={(e) => setPredictionCol(e.target.value)}
+                  >
+                    <option value="">Select column</option>
+                    {columns.map((c) => (
+                      <option key={c} value={c}>
+                        {c}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              )}
+            </div>
 
             <div className="field-row">
               <label className="field half">
@@ -590,6 +706,7 @@ export default function Upload({ onResult, onBack }: Props) {
               loading ||
               !sensitiveAttr ||
               !labelCol ||
+              (analysisType === "model" && !predictionCol) ||
               !privVal ||
               !unprivVal ||
               !positiveLabel ||

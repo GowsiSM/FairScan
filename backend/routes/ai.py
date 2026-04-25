@@ -50,70 +50,88 @@ Return EXACTLY this JSON structure and nothing else:
         if not api_key:
             raise HTTPException(status_code=500, detail="GEMINI_API_KEY not configured on server")
         
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={api_key}"
-        payload = {
-            "contents": [{"parts": [{"text": system_prompt}]}],
-            "generationConfig": {"response_mime_type": "application/json"}
-        }
+        models_to_try = ["gemini-2.5-flash", "gemini-3-flash", "gemma-4-31b-it"]
+        last_error = None
         import time
         max_retries = 3
-        for attempt in range(max_retries):
-            try:
-                res = requests.post(url, json=payload, timeout=30)
-                if res.status_code == 500 and attempt < max_retries - 1:
-                    print(f"AI Provider Error (500). Retrying... (Attempt {attempt + 1})")
-                    time.sleep(1.5)
-                    continue
-                
-                res.raise_for_status()
-                data = res.json()
-                
+
+        for model in models_to_try:
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
+            payload = {
+                "contents": [{"parts": [{"text": system_prompt}]}],
+                "generationConfig": {"response_mime_type": "application/json"}
+            }
+            for attempt in range(max_retries):
                 try:
-                    parts = data["candidates"][0]["content"]["parts"]
-                    # Find the first part that has "text" and is NOT a "thought"
-                    text_part = next((p["text"] for p in parts if "text" in p and not p.get("thought")), None)
+                    res = requests.post(url, json=payload, timeout=30)
+                    if res.status_code == 500 and attempt < max_retries - 1:
+                        print(f"AI Provider Error (500) on {model}. Retrying... (Attempt {attempt + 1})")
+                        time.sleep(1.5)
+                        continue
                     
-                    if not text_part:
-                        raise ValueError("No non-thought text part found in AI response")
+                    res.raise_for_status()
+                    data = res.json()
                     
-                    # Clean up markdown if the model wrapped it (e.g. ```json ... ```)
-                    cleaned_text = text_part.strip()
-                    if cleaned_text.startswith("```"):
-                        # Remove first and last lines
-                        lines = cleaned_text.splitlines()
-                        if len(lines) > 2:
-                            cleaned_text = "\n".join(lines[1:-1])
+                    try:
+                        parts = data["candidates"][0]["content"]["parts"]
+                        text_part = next((p["text"] for p in parts if "text" in p and not p.get("thought")), None)
                         
-                    return json.loads(cleaned_text)
-                except (KeyError, IndexError, ValueError, json.JSONDecodeError) as e:
-                    print(f"AI Response Parsing Error: {e}")
-                    print(f"Raw Response: {data}")
-                    raise HTTPException(status_code=500, detail="Failed to parse AI response")
-                
-            except Exception as e:
-                if attempt < max_retries - 1:
-                    print(f"AI Connection Attempt {attempt + 1} failed: {e}. Retrying...")
-                    time.sleep(1.5)
-                    continue
-                print(f"AI Connection Error after {max_retries} attempts: {e}")
-                raise HTTPException(status_code=500, detail=str(e))
+                        if not text_part:
+                            raise ValueError("No non-thought text part found in AI response")
+                        
+                        cleaned_text = text_part.strip()
+                        if cleaned_text.startswith("```"):
+                            lines = cleaned_text.splitlines()
+                            if len(lines) > 2:
+                                cleaned_text = "\n".join(lines[1:-1])
+                            
+                        return json.loads(cleaned_text)
+                    except (KeyError, IndexError, ValueError, json.JSONDecodeError) as e:
+                        print(f"AI Response Parsing Error on {model}: {e}")
+                        raise Exception("Failed to parse AI response")
+                    
+                except requests.exceptions.HTTPError as e:
+                    last_error = str(e)
+                    if 400 <= e.response.status_code < 500 and e.response.status_code != 429:
+                        break # Skip retries for unrecoverable client errors like 404
+                    if e.response.status_code == 429:
+                        break # Quota exhausted, skip to next model
+                    if attempt < max_retries - 1:
+                        time.sleep(1.5)
+                        continue
+                    break
+                except Exception as e:
+                    last_error = str(e)
+                    if attempt < max_retries - 1:
+                        time.sleep(1.5)
+                        continue
+                    break # try next model
+        
+        raise HTTPException(status_code=500, detail=f"All Gemini models failed. Last error: {last_error}")
 
     elif req.provider == "local":
         url = "http://localhost:1234/v1/chat/completions"
-        payload = {
-            "model": "gemma4:e4b",
-            "messages": [{"role": "user", "content": system_prompt}],
-            "temperature": 0.1,
-            "response_format": {"type": "json_object"}
-        }
-        try:
-            res = requests.post(url, json=payload, timeout=15)
-            if not res.ok:
-                raise HTTPException(status_code=500, detail=f"LM Studio Error: {res.text}")
-            raw_text = res.json()["choices"][0]["message"]["content"]
-            return json.loads(raw_text)
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=f"LM Studio Error: {str(e)}")
+        models_to_try = ["gemma4:e4b"]
+        last_error = None
+        for model in models_to_try:
+            payload = {
+                "model": model,
+                "messages": [{"role": "user", "content": system_prompt}],
+                "temperature": 0.1,
+                "response_format": {"type": "json_object"}
+            }
+            try:
+                res = requests.post(url, json=payload, timeout=15)
+                if not res.ok:
+                    raise Exception(f"LM Studio Error: {res.text}")
+                raw_text = res.json()["choices"][0]["message"]["content"]
+                return json.loads(raw_text)
+            except Exception as e:
+                print(f"Local model {model} failed: {e}")
+                last_error = e
+                continue
+                
+        raise HTTPException(status_code=500, detail=f"All local models failed. Last error: {str(last_error)}")
             
     else:
         raise HTTPException(status_code=400, detail="Provider must be gemini or local")
