@@ -52,6 +52,13 @@ export const MOCK_RESULT: AnalysisResult = {
     { group: "Male", positive_rate: 0.31, count: 3247 },
     { group: "Female", positive_rate: 0.11, count: 1179 },
   ],
+  bias_contributors: [
+    { feature: "hours-per-week", importance: 34.2 },
+    { feature: "education", importance: 26.8 },
+    { feature: "workclass", importance: 18.5 },
+    { feature: "age", importance: 12.7 },
+    { feature: "race", importance: 7.8 },
+  ],
 };
 
 export const MOCK_FIX: FixResult = {

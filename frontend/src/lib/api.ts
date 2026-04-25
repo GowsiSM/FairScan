@@ -91,3 +91,23 @@ export async function analyzeColumns(payload: {
   if (!res.ok) throw new Error("AI Analysis failed");
   return res.json();
 }
+
+export async function explainBias(sessionId: string): Promise<{ explanation: string }> {
+  if (USE_MOCK) {
+    await new Promise((r) => setTimeout(r, 2000));
+    return {
+      explanation:
+        "Your dataset reveals a concerning pattern where female candidates face a significantly lower selection rate compared to their male counterparts. This 42% gap suggests that historical hiring decisions may have been influenced by gender-related factors rather than purely merit-based criteria.\n\nLooking at the contributing features, factors like years of experience and educational background appear to be strongly correlated with the bias. This is a common pattern in hiring datasets — historically, women have had fewer opportunities to accumulate certain types of experience or access specific educational pathways, and when these features carry heavy weight in decision-making, they perpetuate existing inequalities.\n\nThe real-world impact of this bias is substantial. For every 100 qualified female candidates, roughly 42 fewer are receiving positive outcomes compared to equally situated male candidates. This doesn't just affect individual careers — it reinforces systemic barriers and reduces organizational diversity.\n\nBeyond applying the statistical fix, we recommend auditing your hiring criteria to ensure they measure actual job-relevant qualifications. Consider whether proxy variables (like specific school names or continuous employment history) might be inadvertently screening out qualified candidates from underrepresented groups.",
+    };
+  }
+  const res = await fetch(`${BASE}/explain-bias`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ session_id: sessionId }),
+  });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.detail || "AI explanation failed");
+  }
+  return res.json();
+}
