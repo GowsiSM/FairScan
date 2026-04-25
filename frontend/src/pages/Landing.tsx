@@ -8,7 +8,10 @@ interface Props {
 const examples = [
   { stat: "40%", story: "fewer women called back for the same résumé" },
   { stat: "2.5×", story: "more likely to deny loans in minority zip codes" },
-  { stat: "1 in 3", story: "healthcare algorithms deprioritize Black patients" },
+  {
+    stat: "1 in 3",
+    story: "healthcare algorithms deprioritize Black patients",
+  },
 ];
 
 export default function Landing({ onStart }: Props) {
@@ -27,7 +30,9 @@ export default function Landing({ onStart }: Props) {
           <img src="/weight.svg" className="nav-icon" alt="" />
           <span className="logo">fairscan</span>
         </div>
-        <button className="nav-cta" onClick={onStart}>Try it free →</button>
+        <button className="nav-cta" onClick={onStart}>
+          Try it free →
+        </button>
       </header>
 
       <main>
@@ -35,11 +40,13 @@ export default function Landing({ onStart }: Props) {
           <div className="hero-content">
             <div className="hero-eyebrow">Bias Detection Tool</div>
             <h1 className="hero-title">
-              Algorithms decide.<br />
+              Algorithms decide.
+              <br />
               <em>Who decides fairly?</em>
             </h1>
             <p className="hero-sub">
-              Upload any hiring, loan, or healthcare dataset.<br />
+              Upload any hiring, loan, or healthcare dataset.
+              <br />
               See exactly where bias hides — in plain English.
             </p>
             <button className="cta-primary" onClick={onStart}>
@@ -53,7 +60,11 @@ export default function Landing({ onStart }: Props) {
 
         <section className="impact-strip">
           {examples.map((e, i) => (
-            <div className="impact-card" key={i} style={{ animationDelay: `${i * 0.12}s` }}>
+            <div
+              className="impact-card"
+              key={i}
+              style={{ animationDelay: `${i * 0.12}s` }}
+            >
               <span className="impact-stat">{e.stat}</span>
               <span className="impact-story">{e.story}</span>
             </div>
@@ -64,9 +75,21 @@ export default function Landing({ onStart }: Props) {
           <h2 className="section-label">How it works</h2>
           <div className="steps">
             {[
-              { n: "01", title: "Upload", desc: "Drop a CSV — hiring results, loan approvals, medical records." },
-              { n: "02", title: "Detect", desc: "We measure three fairness metrics and translate them into plain human impact." },
-              { n: "03", title: "Fix", desc: "One click rebalances your dataset. Download the corrected version." },
+              {
+                n: "01",
+                title: "Upload",
+                desc: "Drop a CSV — hiring results, loan approvals, medical records.",
+              },
+              {
+                n: "02",
+                title: "Detect",
+                desc: "We measure three fairness metrics and translate them into plain human impact.",
+              },
+              {
+                n: "03",
+                title: "Fix",
+                desc: "One click rebalances your dataset. Download the corrected version.",
+              },
             ].map((s) => (
               <div className="step" key={s.n}>
                 <span className="step-n">{s.n}</span>

@@ -98,7 +98,7 @@ body {
 
 /* Hero */
 .hero {
-  padding: 7rem 3rem 5rem;
+  padding: 2rem 3rem 2rem;
   max-width: 1200px;
   margin: 0 auto;
   display: flex;
@@ -208,7 +208,7 @@ body {
 }
 
 .impact-card {
-  padding: 2.5rem 3rem;
+  padding: 2rem 3rem;
   border-right: 1px solid var(--border);
   animation: fadeUp 0.5s ease both;
 }
