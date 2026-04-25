@@ -37,61 +37,129 @@
   color: var(--ink-muted);
 }
 
-.report-hero {
-  padding: 4rem 3rem 1.5rem;
-  max-width: 680px;
-  border-bottom: 1px solid var(--border);
+.report-header-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
 }
 
-.report-eyebrow {
+.privacy-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #2a7d4f;
+  background: rgba(42, 125, 79, 0.08);
+  border: 1px solid rgba(42, 125, 79, 0.2);
+  border-radius: 100px;
+  padding: 0.3rem 0.7rem;
+}
+
+/* ── Bias Overview Card ── */
+.bias-overview-card {
+  display: grid;
+  grid-template-columns: 1fr 240px;
+  border-bottom: 1px solid var(--border);
+  padding: 3rem 3rem 2.5rem;
+  gap: 3rem;
+  align-items: start;
+}
+
+.boc-left {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+
+.boc-eyebrow {
   font-family: var(--font-mono);
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.12em;
   color: var(--accent);
-  margin-bottom: 0.6rem;
 }
 
-.report-headline {
+.boc-headline {
   font-family: var(--font-display);
-  font-size: clamp(1.8rem, 4vw, 2.8rem);
+  font-size: clamp(1.8rem, 4vw, 2.6rem);
   font-weight: 400;
   line-height: 1.2;
   color: var(--ink);
-  margin-bottom: 0.6rem;
 }
 
-.report-summary {
-  font-size: 1rem;
+.boc-summary {
+  font-size: 0.95rem;
   color: var(--ink-muted);
   font-weight: 300;
   line-height: 1.7;
   max-width: 520px;
 }
 
-/* ── Overview row: score left, chart right ── */
-.report-overview {
-  display: grid;
-  grid-template-columns: 220px 1fr;
+/* Mini stat strip */
+.boc-stats-row {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 1rem 1.4rem;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  width: fit-content;
+}
+
+.boc-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.boc-stat-value {
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 500;
+  color: var(--ink);
+  line-height: 1;
+}
+
+.boc-stat-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink-faint);
+}
+
+.boc-stat-divider {
+  width: 1px;
+  height: 32px;
+  background: var(--border);
+  flex-shrink: 0;
+}
+
+/* Status badge row */
+.boc-status-row {
+  margin-top: 0.4rem;
+}
+
+/* Right column: gauge */
+.boc-right {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 0.5rem;
+}
+
+/* ── Group chart section ── */
+.report-chart-section {
+  padding: 2.5rem 3rem;
   border-bottom: 1px solid var(--border);
 }
 
-.overview-score {
-  padding: 3rem 2rem;
-  border-right: 1px solid var(--border);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 0.6rem;
-}
-
-.overview-chart {
-  padding: 3rem 3rem;
-}
-
-/* Metrics */
-.report-metrics {
+/* ── Analysis Section ── */
+.report-analysis {
   padding: 3rem;
   border-bottom: 1px solid var(--border);
 }
@@ -111,9 +179,10 @@
   gap: 12px;
 }
 
-/* Fix CTA */
+/* Fix CTA — appears directly below overview card */
 .fix-cta-section {
-  padding: 3rem;
+  padding: 2rem 3rem;
+  border-bottom: 1px solid var(--border);
 }
 
 .fix-cta-inner {
@@ -199,21 +268,23 @@
   .report-header {
     padding: 1.2rem 1.5rem;
   }
-  .report-hero {
-    padding: 2.5rem 1.5rem;
-  }
-  .report-overview {
+  .bias-overview-card {
     grid-template-columns: 1fr;
+    padding: 2rem 1.5rem 1.5rem;
+    gap: 2rem;
   }
-  .overview-score {
-    border-right: none;
-    border-bottom: 1px solid var(--border);
+  .boc-right {
+    justify-content: flex-start;
+  }
+  .boc-stats-row {
+    flex-wrap: wrap;
+    gap: 1rem;
+    width: 100%;
+  }
+  .report-chart-section {
     padding: 2rem 1.5rem;
   }
-  .overview-chart {
-    padding: 2rem 1.5rem;
-  }
-  .report-metrics {
+  .report-analysis {
     padding: 2rem 1.5rem;
   }
   .metrics-grid {

@@ -5,6 +5,10 @@ import BiasScore from "../components/BiasScore";
 import MetricCard from "../components/MetricCard";
 import GroupChart from "../components/GroupChart";
 import FixPanel from "../components/FixPanel";
+import BiasContributors from "../components/BiasContributors";
+import MetricGuide from "../components/MetricGuide";
+import CertBadge from "../components/CertBadge";
+import AiExplainer from "../components/AiExplainer";
 import "./Report.css";
 
 interface Props {
@@ -47,46 +51,64 @@ export default function Report({ result, onReset }: Props) {
         ? "medium"
         : "high";
 
+  const totalRecords = result.group_stats.reduce((sum, g) => sum + g.count, 0);
+
   return (
     <div className={`report-page ${visible ? "visible" : ""}`}>
       <header className="report-header">
         <button className="back-btn" onClick={onReset}>
           ← new scan
         </button>
-        <span className="report-domain">{result.domain}</span>
+        <div className="report-header-right">
+          <div className="privacy-badge">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" />
+            </svg>
+            <span>Data not stored</span>
+          </div>
+          <span className="report-domain">{result.domain}</span>
+        </div>
       </header>
 
-      {/* Headline */}
-      <section className="report-hero">
-        <div className="report-eyebrow">Scan complete</div>
-        <h1 className="report-headline">{result.headline}</h1>
-        <p className="report-summary">{result.summary}</p>
-      </section>
+      {/* ── Consolidated Bias Overview Card ── */}
+      <section className="bias-overview-card">
+        {/* Left column: headline + stats + status badges + CTA */}
+        <div className="boc-left">
+          <div className="boc-eyebrow">Scan complete</div>
+          <h1 className="boc-headline">{result.headline}</h1>
+          <p className="boc-summary">{result.summary}</p>
 
-      {/* Score + group chart side by side */}
-      <section className="report-overview">
-        <div className="overview-score">
+          {/* Key scan stats */}
+          <div className="boc-stats-row">
+            <div className="boc-stat">
+              <span className="boc-stat-value">{totalRecords.toLocaleString()}</span>
+              <span className="boc-stat-label">Records scanned</span>
+            </div>
+            <div className="boc-stat-divider" />
+            <div className="boc-stat">
+              <span className="boc-stat-value">{result.metrics.length}</span>
+              <span className="boc-stat-label">Metrics evaluated</span>
+            </div>
+            <div className="boc-stat-divider" />
+            <div className="boc-stat">
+              <span className="boc-stat-value" style={{ textTransform: "capitalize" }}>{result.sensitive_attr}</span>
+              <span className="boc-stat-label">Sensitive attribute</span>
+            </div>
+          </div>
+
+          {/* Status indicator (was CertBadge in sidebar) */}
+          <div className="boc-status-row">
+            <CertBadge score={result.bias_score} />
+          </div>
+        </div>
+
+        {/* Right column: fairness score gauge */}
+        <div className="boc-right">
           <BiasScore score={result.bias_score} severity={scoreColor} />
         </div>
-        <div className="overview-chart">
-          <GroupChart
-            stats={result.group_stats}
-            sensitiveAttr={result.sensitive_attr}
-          />
-        </div>
       </section>
 
-      {/* Metrics */}
-      <section className="report-metrics">
-        <h2 className="section-label">What we found</h2>
-        <div className="metrics-grid">
-          {result.metrics.map((m, i) => (
-            <MetricCard key={m.key} metric={m} delay={i * 80} />
-          ))}
-        </div>
-      </section>
-
-      {/* Fix */}
+      {/* ── Ready to fix this? — embedded below overview ── */}
       {!fixResult && (
         <section className="fix-cta-section">
           <div className="fix-cta-inner">
@@ -110,6 +132,37 @@ export default function Report({ result, onReset }: Props) {
           </div>
         </section>
       )}
+
+      {/* ── Group outcome chart ── */}
+      <section className="report-chart-section">
+        <GroupChart
+          stats={result.group_stats}
+          sensitiveAttr={result.sensitive_attr}
+        />
+      </section>
+
+      {/* ── ANALYSIS SECTION ── */}
+      <section className="report-analysis">
+        <div className="section-label">ANALYSIS</div>
+
+        {/* 1. Why this bias exists (Diagnostic chart) */}
+        {result.bias_contributors && result.bias_contributors.length > 0 && (
+          <BiasContributors
+            contributors={result.bias_contributors}
+            sensitiveAttr={result.sensitive_attr}
+          />
+        )}
+
+        {/* 2. AI Narrative Summary */}
+        <AiExplainer sessionId={result.session_id} />
+
+        {/* 3. Bias Breakdown (Metrics) */}
+        <div className="metrics-grid">
+          {result.metrics.map((m, i) => (
+            <MetricCard key={m.key} metric={m} delay={i * 80} />
+          ))}
+        </div>
+      </section>
 
       {fixResult && (
         <div ref={fixRef}>

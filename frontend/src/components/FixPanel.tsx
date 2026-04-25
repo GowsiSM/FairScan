@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import type { AnalysisResult, FixResult } from "../lib/types";
+import CertBadge from "./CertBadge";
 import "./FixPanel.css";
 
 interface Props {
@@ -36,7 +37,41 @@ function AnimatedScore({ endValue, durationMs = 1000 }: { endValue: number; dura
   return <div className="ba-score" style={{ color: scoreColor(value) }}>{value}</div>;
 }
 
-export default function FixPanel({ fix, onDownload }: Props) {
+function FinalParityBars({
+  stats,
+}: {
+  stats: { group: string; positive_rate: number }[];
+}) {
+  const max = Math.max(...stats.map((s) => s.positive_rate), 0.01);
+
+  return (
+    <div className="comparison-bars">
+      <div className="cb-header">
+        <span className="cb-title">Final group outcome rates</span>
+      </div>
+      <div className="cb-bars-container">
+        {stats.map((s, i) => (
+          <div className="cb-bar-row" key={i}>
+            <span className="cb-bar-label">{s.group}</span>
+            <div className="cb-bar-track">
+              <div
+                className="cb-bar-fill improved"
+                style={{
+                  width: `${(s.positive_rate / max) * 100}%`,
+                }}
+              />
+            </div>
+            <span className="cb-bar-pct">
+              {(s.positive_rate * 100).toFixed(1)}%
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export default function FixPanel({ before, fix, onDownload }: Props) {
   const improvement = fix.bias_score_after - fix.bias_score_before;
 
   return (
@@ -54,6 +89,7 @@ export default function FixPanel({ fix, onDownload }: Props) {
           <div className="ba-label">Before</div>
           <AnimatedScore endValue={fix.bias_score_before} />
           <div className="ba-sub">/ 100</div>
+          <CertBadge score={fix.bias_score_before} compact />
           <div className="ba-metrics">
             {fix.metrics_before.map((m) => (
               <div className="ba-metric" key={m.key}>
@@ -68,6 +104,7 @@ export default function FixPanel({ fix, onDownload }: Props) {
           <div className="ba-label">After</div>
           <AnimatedScore endValue={fix.bias_score_after} />
           <div className="ba-sub">/ 100</div>
+          <CertBadge score={fix.bias_score_after} compact />
           <div className="ba-metrics">
             {fix.metrics_after.map((m) => (
               <div className="ba-metric" key={m.key}>
@@ -78,6 +115,11 @@ export default function FixPanel({ fix, onDownload }: Props) {
           </div>
         </div>
       </div>
+
+      {/* Final visual bar chart */}
+      <FinalParityBars
+        stats={fix.group_stats_after}
+      />
 
       <div className="download-row">
         <div>
