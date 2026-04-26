@@ -9,13 +9,24 @@ from routes.demo import router as demo_router
 from routes.ai import router as ai_router
 from routes.explain import router as explain_router
 
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
 app = FastAPI(title="FairScan API", version="0.1.0")
+
+# Tighten CORS for security
+allowed_origins = os.getenv(
+    "ALLOWED_ORIGINS",
+    "http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173"
+).split(",")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=allowed_origins,
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE"],
     allow_headers=["*"],
 )
 

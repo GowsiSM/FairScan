@@ -1,8 +1,13 @@
 import { useEffect, useRef, useState } from "react";
+import { useAuth } from "../contexts/AuthContext";
+import Navbar from "../components/Navbar";
+import HistorySidebar from "../components/HistorySidebar";
+import type { AnalysisResult } from "../lib/types";
 import "./Landing.css";
 
 interface Props {
   onStart: () => void;
+  onSelectHistory: (result: AnalysisResult) => void;
 }
 
 const examples = [
@@ -14,8 +19,10 @@ const examples = [
   },
 ];
 
-export default function Landing({ onStart }: Props) {
+export default function Landing({ onStart, onSelectHistory }: Props) {
   const heroRef = useRef<HTMLDivElement>(null);
+  const { user, signInWithGoogle } = useAuth();
+  const [historyOpen, setHistoryOpen] = useState(false);
 
   useEffect(() => {
     const el = heroRef.current;
@@ -23,17 +30,43 @@ export default function Landing({ onStart }: Props) {
     requestAnimationFrame(() => el.classList.add("visible"));
   }, []);
 
+  const handleCta = async () => {
+    if (user) {
+      onStart();
+    } else {
+      try {
+        await signInWithGoogle();
+        onStart();
+      } catch {
+        // user closed the popup — do nothing
+      }
+    }
+  };
+
   return (
     <div className="landing">
-      <header className="landing-header">
-        <div className="logo-container">
-          <img src="/weight.svg" className="nav-icon" alt="" />
-          <span className="logo">fairscan</span>
-        </div>
-        <button className="nav-cta" onClick={onStart}>
-          Try it free →
-        </button>
-      </header>
+      <Navbar
+        rightSlot={
+          !user ? (
+            <button className="nav-cta" onClick={handleCta}>
+              Try it free →
+            </button>
+          ) : (
+            <>
+              <button className="nav-cta secondary" onClick={() => setHistoryOpen(true)}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{marginRight: 4}}>
+                  <circle cx="12" cy="12" r="10" />
+                  <polyline points="12 6 12 12 16 14" />
+                </svg>
+                History
+              </button>
+              <button className="nav-cta" onClick={onStart}>
+                New scan →
+              </button>
+            </>
+          )
+        }
+      />
 
       <main>
         <section className="hero" ref={heroRef}>
@@ -49,7 +82,7 @@ export default function Landing({ onStart }: Props) {
               <br />
               See exactly where bias hides — in plain English.
             </p>
-            <button className="cta-primary" onClick={onStart}>
+            <button className="cta-primary" onClick={handleCta}>
               Scan your dataset
             </button>
           </div>
@@ -106,6 +139,12 @@ export default function Landing({ onStart }: Props) {
       <footer className="landing-footer">
         <span>Built for Google Solution Challenge 2026</span>
       </footer>
+
+      <HistorySidebar
+        open={historyOpen}
+        onClose={() => setHistoryOpen(false)}
+        onSelect={onSelectHistory}
+      />
     </div>
   );
 }

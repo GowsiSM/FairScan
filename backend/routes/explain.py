@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 import json
 import requests
+from typing import Any
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
@@ -10,9 +11,17 @@ from dotenv import load_dotenv
 
 from store import get_session
 
+import re
+
 load_dotenv()
 
 router = APIRouter()
+
+def sanitize_text(text: Any) -> str:
+    """Basic sanitization for LLM prompt inclusion."""
+    if text is None:
+        return "unknown"
+    return re.sub(r"[{}[\]\"']", "", str(text))
 
 
 class ExplainRequest(BaseModel):
@@ -28,9 +37,9 @@ def explain_bias(payload: ExplainRequest) -> dict:
     analysis = session.analysis
     config = session.config
 
-    api_key = os.getenv("GEMINI_API_KEY")
+    api_key = os.getenv("OPENROUTER_API_KEY")
     if not api_key:
-        raise HTTPException(status_code=500, detail="GEMINI_API_KEY not configured")
+        raise HTTPException(status_code=500, detail="OPENROUTER_API_KEY not configured")
 
     # Build a rich context prompt for Gemini
     metrics_summary = "\n".join(
@@ -52,23 +61,22 @@ def explain_bias(payload: ExplainRequest) -> dict:
     analysis_type = config.get("analysis_type", "dataset")
     is_model = analysis_type == "model"
     
-    target_col = config.get("prediction_col") if is_model else config.get("label_col", "unknown")
-    context_type = "Machine Learning Model Predictions" if is_model else "Historical Dataset Records"
+    target_col = sanitize_text(config.get("prediction_col") if is_model else config.get("label_col", "unknown"))
+    safe_domain = sanitize_text(config.get("domain", "unknown"))
+    safe_sensitive = sanitize_text(config.get("sensitive_col", "unknown"))
+    safe_priv = sanitize_text(analysis.get("privileged_group", "unknown"))
+    safe_unpriv = sanitize_text(analysis.get("unprivileged_group", "unknown"))
 
     prompt = f"""You are an expert AI fairness advisor giving a plain-English explanation to a non-technical user.
 
 Context:
-- Analysis Type: {context_type}
-- Domain: {config.get('domain', 'unknown')}
-- Sensitive attribute: {config.get('sensitive_col', 'unknown')}
+- Analysis Type: {analysis_type}
+- Domain: {safe_domain}
+- Sensitive attribute: {safe_sensitive}
 - Target column (being analyzed): {target_col}
-- Privileged group: {analysis.get('privileged_group', 'unknown')}
-- Unprivileged group: {analysis.get('unprivileged_group', 'unknown')}
+- Privileged group: {safe_priv}
+- Unprivileged group: {safe_unpriv}
 - Bias score: {analysis.get('bias_score', 'N/A')} / 100
-
-Key findings:
-{analysis.get('headline', '')}
-{analysis.get('summary', '')}
 
 Fairness metrics:
 {metrics_summary}
@@ -79,60 +87,42 @@ Group statistics:
 Top features contributing to bias:
 {contrib_text}
 
-Write a 3-4 paragraph explanation in plain English that:
-1. Explains what kind of bias was found and how severe it is.
-2. Suggests possible systemic or algorithmic reasons WHY this bias exists (based on the domain and features).
-3. Explains the real-world impact on the unprivileged group.
-4. {"Recommends next steps for retraining, algorithmic auditing, or using fairness-aware modeling techniques." if is_model else "Recommends next steps beyond statistical fixes, such as auditing data collection or revising evaluation criteria."}
+Provide your response strictly as a JSON object with the following keys. Do NOT wrap the JSON in markdown or backticks.
+1. "headline": A short, 1-sentence catchy headline about the bias found in the dataset.
+2. "summary": A 2-sentence summary accurate to the dataset bias metrics provided above.
+3. "explanation": A 3-4 paragraph explanation in plain English that explains what kind of bias was found and how severe it is, suggests possible systemic or algorithmic reasons WHY this bias exists, explains the real-world impact, and {"recommends next steps for retraining, algorithmic auditing, or using fairness-aware modeling techniques" if is_model else "recommends next steps beyond statistical fixes"}. Use flowing paragraphs, no bullet points, no jargon.
+4. "bias_contributors_note": A 1-2 sentence note explaining WHY the specific features listed in "Top features contributing to bias" are correlated with the sensitive attribute and outcome, acting as proxies.
 
-Keep the tone professional but accessible. No jargon. No code. No bullet points — use flowing paragraphs.
-Do NOT wrap the response in markdown or quotes. Just plain text paragraphs."""
+CRITICAL INSTRUCTIONS:
+- You must strictly output valid JSON and nothing else.
+- The summary and headline must be accurate to the dataset.
+- You must not hallucinate and should not include any unrelated info.
+"""
 
-    req_payload = {
-        "contents": [{"parts": [{"text": prompt}]}],
+    url = "https://openrouter.ai/api/v1/chat/completions"
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "HTTP-Referer": "https://fairscan.ai", # Optional, for OpenRouter rankings
+        "X-Title": "FairScan", # Optional
+        "Content-Type": "application/json"
+    }
+    
+    payload = {
+        "model": "google/gemini-2.0-flash-001",
+        "messages": [
+            {"role": "user", "content": prompt}
+        ],
+        "response_format": { "type": "json_object" }
     }
 
-    models_to_try = ["gemma-4-31b-it", "gemini-2.5-flash", "gemini-3-flash"]
-    last_error = None
-    import time
-    max_retries = 3
+    try:
+        res = requests.post(url, headers=headers, json=payload, timeout=45)
+        res.raise_for_status()
+        data = res.json()
+        
+        content = data["choices"][0]["message"]["content"]
+        return json.loads(content, strict=False)
 
-    for model in models_to_try:
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
-        for attempt in range(max_retries):
-            try:
-                res = requests.post(url, json=req_payload, timeout=30)
-                if res.status_code == 500 and attempt < max_retries - 1:
-                    time.sleep(1.5)
-                    continue
-                res.raise_for_status()
-                data = res.json()
-
-                parts = data["candidates"][0]["content"]["parts"]
-                text_part = next(
-                    (p["text"] for p in parts if "text" in p and not p.get("thought")),
-                    None,
-                )
-                if not text_part:
-                    raise ValueError("No text in AI response")
-
-                return {"explanation": text_part.strip()}
-
-            except requests.exceptions.HTTPError as e:
-                last_error = str(e)
-                if 400 <= e.response.status_code < 500 and e.response.status_code != 429:
-                    break # Skip retries for unrecoverable client errors like 404
-                if e.response.status_code == 429:
-                    break # Quota exhausted, skip to next model
-                if attempt < max_retries - 1:
-                    time.sleep(1.5)
-                    continue
-                break
-            except Exception as e:
-                last_error = str(e)
-                if attempt < max_retries - 1:
-                    time.sleep(1.5)
-                    continue
-                break # try next model
-                
-    raise HTTPException(status_code=500, detail=f"AI explanation failed. Last error: {last_error}")
+    except Exception as e:
+        print(f"OpenRouter Error: {e}")
+        raise HTTPException(status_code=500, detail=f"AI explanation failed via OpenRouter: {str(e)}")

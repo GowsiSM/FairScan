@@ -1,0 +1,195 @@
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 2rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.navbar-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: none;
+}
+
+.navbar-icon {
+  width: 40px;
+  height: 40px;
+  color: var(--accent);
+}
+
+.navbar-logo {
+  font-family: var(--font-mono);
+  font-size: 20px;
+  letter-spacing: 0.04em;
+  color: var(--ink);
+}
+
+.navbar-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+/* ── Authenticated user area ── */
+.navbar-user {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.3rem 0.5rem 0.3rem 0.35rem;
+  border: 1px solid var(--border);
+  border-radius: 100px;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.navbar-user:hover {
+  border-color: var(--accent);
+  background: var(--surface-2);
+}
+
+.navbar-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1.5px solid var(--border);
+}
+
+.navbar-name {
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink);
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.navbar-sign-out {
+  background: none;
+  border: none;
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: var(--ink-faint);
+  cursor: pointer;
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  transition: color 0.2s, background 0.2s;
+}
+
+.navbar-sign-out:hover {
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+
+/* ── Sign in button ── */
+.navbar-sign-in {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 100px;
+  background: var(--surface);
+  color: var(--ink);
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
+}
+
+.navbar-sign-in:hover {
+  background: var(--surface-2);
+  border-color: var(--accent);
+  box-shadow: 0 2px 8px rgba(255, 126, 84, 0.12);
+}
+
+.navbar-sign-in svg {
+  flex-shrink: 0;
+}
+
+/* ── History & Save buttons ── */
+.navbar-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 500;
+  padding: 0.4rem 0.85rem;
+  border: 1px solid var(--border);
+  border-radius: 100px;
+  background: transparent;
+  color: var(--ink-muted);
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s, background 0.2s;
+}
+
+.navbar-icon-btn:hover {
+  color: var(--ink);
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.navbar-save-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 500;
+  padding: 0.4rem 0.9rem;
+  border: none;
+  border-radius: 100px;
+  background: var(--accent);
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.2s, opacity 0.2s, transform 0.15s;
+}
+
+.navbar-save-btn:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--accent) 85%, #fff);
+  transform: translateY(-1px);
+}
+
+.navbar-save-btn:disabled {
+  cursor: default;
+  opacity: 0.85;
+}
+
+.navbar-save-btn.saved {
+  background: #34d399;
+}
+
+/* ── Mobile ── */
+@media (max-width: 600px) {
+  .navbar {
+    padding: 0.8rem 1rem;
+  }
+
+  .navbar-name {
+    display: none;
+  }
+
+  .navbar-sign-in {
+    font-size: 12px;
+    padding: 0.4rem 0.7rem;
+  }
+
+  .navbar-sign-in span {
+    display: none;
+  }
+}

@@ -5,6 +5,8 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from dotenv import load_dotenv
 
+import re
+
 load_dotenv()
 
 router = APIRouter()
@@ -15,12 +17,39 @@ class AIAnalyzeRequest(BaseModel):
     domain: str
     provider: str
 
+def sanitize_prompt_input(text: str) -> str:
+    """Basic sanitization to prevent prompt injection."""
+    return re.sub(r"[{}[\]\"']", "", text)
+
+def filter_pii_columns(columns: list[str], unique_values: dict[str, list[str]]) -> tuple[list[str], dict[str, list[str]]]:
+    """Exclude columns that likely contain PII from unique value analysis."""
+    pii_keywords = {"ssn", "email", "phone", "address", "social_security", "fullname", "first_name", "last_name", "password"}
+    filtered_columns = []
+    filtered_uniques = {}
+    
+    for col in columns:
+        col_lower = col.lower()
+        # If it looks like a PII column, redact its values
+        if any(k in col_lower for k in pii_keywords):
+            filtered_columns.append(col)
+            filtered_uniques[col] = ["[REDACTED_POTENTIAL_PII]"]
+        else:
+            filtered_columns.append(col)
+            filtered_uniques[col] = unique_values.get(col, [])
+            
+    return filtered_columns, filtered_uniques
+
 @router.post("/analyze-columns")
 def analyze_columns(req: AIAnalyzeRequest):
+    # Sanitize and filter inputs
+    safe_domain = sanitize_prompt_input(req.domain)
+    safe_columns = [sanitize_prompt_input(c) for c in req.columns]
+    safe_columns_list, safe_uniques = filter_pii_columns(safe_columns, req.unique_values)
+
     system_prompt = f"""
-You are an expert data ethicist and ML fairness engineer. Analyzing a structured dataset for the "{req.domain}" domain.
-Columns: {req.columns}
-Categorical Options: {req.unique_values}
+You are an expert data ethicist and ML fairness engineer. Analyzing a structured dataset for the "{safe_domain}" domain.
+Columns: {safe_columns_list}
+Categorical Options: {safe_uniques}
 
 Identify:
 1. Which column is the MOST likely primary sensitive demographic attribute (e.g., gender, race, age). If multiple exist, prioritize gender or race as they are standard for initial scans. 
@@ -46,68 +75,36 @@ Return EXACTLY this JSON structure and nothing else:
 """
     
     if req.provider == "gemini":
-        api_key = os.getenv("GEMINI_API_KEY")
+        api_key = os.getenv("OPENROUTER_API_KEY")
         if not api_key:
-            raise HTTPException(status_code=500, detail="GEMINI_API_KEY not configured on server")
+            raise HTTPException(status_code=500, detail="OPENROUTER_API_KEY not configured on server")
         
-        models_to_try = ["gemini-2.5-flash", "gemini-3-flash", "gemma-4-31b-it"]
-        last_error = None
-        import time
-        max_retries = 3
+        url = "https://openrouter.ai/api/v1/chat/completions"
+        headers = {
+            "Authorization": f"Bearer {api_key}",
+            "HTTP-Referer": "https://fairscan.ai",
+            "X-Title": "FairScan",
+            "Content-Type": "application/json"
+        }
+        
+        payload = {
+            "model": "google/gemini-2.5-flash",
+            "messages": [
+                {"role": "user", "content": system_prompt}
+            ],
+            "response_format": { "type": "json_object" }
+        }
 
-        for model in models_to_try:
-            url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
-            payload = {
-                "contents": [{"parts": [{"text": system_prompt}]}],
-                "generationConfig": {"response_mime_type": "application/json"}
-            }
-            for attempt in range(max_retries):
-                try:
-                    res = requests.post(url, json=payload, timeout=30)
-                    if res.status_code == 500 and attempt < max_retries - 1:
-                        print(f"AI Provider Error (500) on {model}. Retrying... (Attempt {attempt + 1})")
-                        time.sleep(1.5)
-                        continue
-                    
-                    res.raise_for_status()
-                    data = res.json()
-                    
-                    try:
-                        parts = data["candidates"][0]["content"]["parts"]
-                        text_part = next((p["text"] for p in parts if "text" in p and not p.get("thought")), None)
-                        
-                        if not text_part:
-                            raise ValueError("No non-thought text part found in AI response")
-                        
-                        cleaned_text = text_part.strip()
-                        if cleaned_text.startswith("```"):
-                            lines = cleaned_text.splitlines()
-                            if len(lines) > 2:
-                                cleaned_text = "\n".join(lines[1:-1])
-                            
-                        return json.loads(cleaned_text)
-                    except (KeyError, IndexError, ValueError, json.JSONDecodeError) as e:
-                        print(f"AI Response Parsing Error on {model}: {e}")
-                        raise Exception("Failed to parse AI response")
-                    
-                except requests.exceptions.HTTPError as e:
-                    last_error = str(e)
-                    if 400 <= e.response.status_code < 500 and e.response.status_code != 429:
-                        break # Skip retries for unrecoverable client errors like 404
-                    if e.response.status_code == 429:
-                        break # Quota exhausted, skip to next model
-                    if attempt < max_retries - 1:
-                        time.sleep(1.5)
-                        continue
-                    break
-                except Exception as e:
-                    last_error = str(e)
-                    if attempt < max_retries - 1:
-                        time.sleep(1.5)
-                        continue
-                    break # try next model
-        
-        raise HTTPException(status_code=500, detail=f"All Gemini models failed. Last error: {last_error}")
+        try:
+            res = requests.post(url, headers=headers, json=payload, timeout=45)
+            res.raise_for_status()
+            data = res.json()
+            
+            content = data["choices"][0]["message"]["content"]
+            return json.loads(content, strict=False)
+        except Exception as e:
+            print(f"OpenRouter Error: {e}")
+            raise HTTPException(status_code=500, detail=f"All OpenRouter models failed. Last error: {str(e)}")
 
     elif req.provider == "local":
         url = "http://localhost:1234/v1/chat/completions"

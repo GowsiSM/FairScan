@@ -1,7 +1,11 @@
 from __future__ import annotations
 
 
+import math
+
 def _clamp(value: float, lo: float, hi: float) -> float:
+	if math.isnan(value):
+		return lo
 	return max(lo, min(hi, value))
 
 

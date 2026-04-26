@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
 from uuid import uuid4
 
 from fastapi import APIRouter, File, Form, UploadFile
@@ -141,8 +143,12 @@ async def analyze(
         },
     ]
 
+    import math
     di = metrics["disparate_impact"]
-    if di < 1:
+    if math.isnan(di):
+        prob_gap = 0
+        direction_word = "less"
+    elif di < 1:
         direction_word = "less"
         prob_gap = round((1 - di) * 100)
     else:
@@ -151,17 +157,24 @@ async def analyze(
 
     verb_label = (prediction_col if analysis_type == "model" else label_col).lower().replace("be ", "")
     
+    rate_desc = "at a rate well below the 80% threshold" if direction_word == "less" else "at a disproportionately higher rate"
+    
     if analysis_type == "model":
         headline = f"The model is {prob_gap}% {direction_word} likely to predict '{verb_label}' for {unprivileged_name}."
-        summary = f"Your model exhibits predictive bias. It predicts positive outcomes for {unprivileged_name} at a rate well below the 80% threshold compared to {privileged_name}. This suggests the model has learned or amplified historical disadvantages."
+        summary = f"Your model exhibits predictive bias. It predicts positive outcomes for {unprivileged_name} {rate_desc} compared to {privileged_name}. This suggests the model has learned or amplified historical disadvantages."
     else:
         headline = f"{unprivileged_name} are {prob_gap}% {direction_word} likely to be {verb_label}."
-        summary = f"Your dataset shows a significant fairness gap. {unprivileged_name} are {verb_label} at a rate well below the 80% threshold compared to {privileged_name}. This pattern suggests systematic disadvantage."
+        summary = f"Your dataset shows a significant fairness gap. {unprivileged_name} are {verb_label} {rate_desc} compared to {privileged_name}. This pattern suggests systematic disadvantage."
 
-    # Compute bias root cause — feature importance analysis
+    # Compute bias root cause — run in thread pool with timeout so it never blocks the response
+    _executor = ThreadPoolExecutor(max_workers=1)
     try:
-        bias_contributors = compute_feature_importance(prepared, analysis_type=analysis_type)
-    except Exception:
+        loop = asyncio.get_event_loop()
+        bias_contributors = await asyncio.wait_for(
+            loop.run_in_executor(_executor, compute_feature_importance, prepared, analysis_type),
+            timeout=8.0,
+        )
+    except (asyncio.TimeoutError, Exception):
         bias_contributors = []
 
     payload = {

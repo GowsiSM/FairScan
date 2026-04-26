@@ -33,6 +33,13 @@ export interface AnalysisResult {
   headline: string;
   summary: string;
   bias_contributors?: BiasContributor[];
+  analysis_type?: string;
+  /** Set when this result was loaded from Firestore */
+  firestoreId?: string;
+  /** If true, Fix Bias is disabled and AI re-fetch is skipped */
+  isReadOnly?: boolean;
+  /** ISO timestamp from Firestore */
+  createdAt?: any;
 }
 
 export interface PresetConfig {

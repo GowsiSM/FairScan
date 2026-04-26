@@ -10,7 +10,7 @@ interface Props {
 
 /* ── Domain SVG Icons ── */
 const HiringIcon = () => (
-  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+  <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
     <rect x="2" y="7" width="20" height="14" rx="2" />
     <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" />
     <path d="M12 12v.01" />
@@ -19,7 +19,7 @@ const HiringIcon = () => (
 );
 
 const LendingIcon = () => (
-  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+  <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
     <path d="M3 21h18" />
     <path d="M3 7h18" />
     <path d="M5 7v14" />
@@ -31,7 +31,7 @@ const LendingIcon = () => (
 );
 
 const HealthcareIcon = () => (
-  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+  <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
     <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.04 3 5.5l7 7Z" />
     <path d="M12 5v6" />
     <path d="M9 8h6" />
@@ -39,14 +39,14 @@ const HealthcareIcon = () => (
 );
 
 const CustomIcon = () => (
-  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+  <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
     <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
     <circle cx="12" cy="12" r="3" />
   </svg>
 );
 
 const DatasetIcon = () => (
-  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+  <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
     <path d="M3 3v18h18" />
     <path d="M18 17V9" />
     <path d="M13 17V5" />
@@ -55,7 +55,7 @@ const DatasetIcon = () => (
 );
 
 const ModelIcon = () => (
-  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+  <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
     <rect x="3" y="11" width="18" height="10" rx="2" />
     <circle cx="12" cy="5" r="2" />
     <path d="M12 7v4" />
@@ -203,6 +203,7 @@ export default function Upload({ onResult, onBack }: Props) {
         analysisType,
         predictionCol,
       );
+
       onResult(result);
     } catch {
       setError("Analysis failed. Check your column selections.");
@@ -243,18 +244,20 @@ export default function Upload({ onResult, onBack }: Props) {
   useEffect(() => {
     if (aiData && !hasAutoFilled) {
       // Sensitive Column
-      const sensCol = Object.keys(aiData.sensitive_columns || {})[0];
-      if (sensCol && columns.includes(sensCol)) {
+      const sensColRaw = Object.keys(aiData.sensitive_columns || {})[0];
+      const sensCol = columns.find(c => c.toLowerCase() === sensColRaw?.toLowerCase());
+      if (sensCol) {
         setSensitiveAttr(sensCol);
       }
 
       // Outcome Column
-      const outCol = Object.keys(aiData.outcome_values || {})[0];
-      if (outCol && columns.includes(outCol)) {
+      const outColRaw = Object.keys(aiData.outcome_values || {})[0];
+      const outCol = columns.find(c => c.toLowerCase() === outColRaw?.toLowerCase());
+      if (outCol) {
         setLabelCol(outCol);
 
         // Find positive/impacted values
-        const vals = aiData.outcome_values[outCol];
+        const vals = aiData.outcome_values[outColRaw];
         const posVal = Object.keys(vals).find(
           (v) => vals[v] === "not impacted",
         );
@@ -604,26 +607,34 @@ export default function Upload({ onResult, onBack }: Props) {
             <div className="field-row">
               <label className="field half">
                 <span className="field-label">Privileged group value</span>
-                {uniqueValues[sensitiveAttr] ? (
-                  <select
-                    value={privVal}
-                    onChange={(e) => setPrivVal(e.target.value)}
-                  >
-                    <option value="">Select value</option>
-                    {aiData?.numerical_groups?.[sensitiveAttr]?.map((grp: string) => (
-                      <option key={grp} value={grp}>
-                        ✦ {grp}
-                      </option>
-                    ))}
-                    {aiData?.numerical_groups?.[sensitiveAttr] && (
-                      <option disabled>──────</option>
-                    )}
-                    {uniqueValues[sensitiveAttr].map((v) => (
-                      <option key={v} value={v}>
-                        {getGroupValueLabel(sensitiveAttr, v)}
-                      </option>
-                    ))}
-                  </select>
+                {uniqueValues[sensitiveAttr] || aiData?.numerical_groups?.[sensitiveAttr] ? (
+                  <div className="chip-group">
+                    {/* Render Numerical Group Chips (if any) */}
+                    {aiData?.numerical_groups?.[sensitiveAttr]
+                      ?.filter((grp: string) => grp !== unprivVal)
+                      .map((grp: string) => (
+                        <button
+                          key={grp}
+                          className={`chip ${privVal === grp ? "selected" : ""}`}
+                          onClick={() => setPrivVal(grp)}
+                        >
+                          ✦ {grp}
+                        </button>
+                      ))}
+
+                    {/* Render Categorical Values */}
+                    {(uniqueValues[sensitiveAttr] || [])
+                      .filter((v) => v !== unprivVal)
+                      .map((v) => (
+                        <button
+                          key={v}
+                          className={`chip ${privVal === v ? "selected" : ""}`}
+                          onClick={() => setPrivVal(v)}
+                        >
+                          {getGroupValueLabel(sensitiveAttr, v)}
+                        </button>
+                      ))}
+                  </div>
                 ) : (
                   <input
                     type="text"
@@ -636,26 +647,34 @@ export default function Upload({ onResult, onBack }: Props) {
 
               <label className="field half">
                 <span className="field-label">Unprivileged group value</span>
-                {uniqueValues[sensitiveAttr] ? (
-                  <select
-                    value={unprivVal}
-                    onChange={(e) => setUnprivVal(e.target.value)}
-                  >
-                    <option value="">Select value</option>
-                    {aiData?.numerical_groups?.[sensitiveAttr]?.map((grp: string) => (
-                      <option key={grp} value={grp}>
-                        ✦ {grp}
-                      </option>
-                    ))}
-                    {aiData?.numerical_groups?.[sensitiveAttr] && (
-                      <option disabled>──────</option>
-                    )}
-                    {uniqueValues[sensitiveAttr].map((v) => (
-                      <option key={v} value={v}>
-                        {getGroupValueLabel(sensitiveAttr, v)}
-                      </option>
-                    ))}
-                  </select>
+                {uniqueValues[sensitiveAttr] || aiData?.numerical_groups?.[sensitiveAttr] ? (
+                  <div className="chip-group">
+                    {/* Render Numerical Group Chips (if any) */}
+                    {aiData?.numerical_groups?.[sensitiveAttr]
+                      ?.filter((grp: string) => grp !== privVal)
+                      .map((grp: string) => (
+                        <button
+                          key={grp}
+                          className={`chip ${unprivVal === grp ? "selected" : ""}`}
+                          onClick={() => setUnprivVal(grp)}
+                        >
+                          ✦ {grp}
+                        </button>
+                      ))}
+
+                    {/* Render Categorical Values */}
+                    {(uniqueValues[sensitiveAttr] || [])
+                      .filter((v) => v !== privVal)
+                      .map((v) => (
+                        <button
+                          key={v}
+                          className={`chip ${unprivVal === v ? "selected" : ""}`}
+                          onClick={() => setUnprivVal(v)}
+                        >
+                          {getGroupValueLabel(sensitiveAttr, v)}
+                        </button>
+                      ))}
+                  </div>
                 ) : (
                   <input
                     type="text"
@@ -675,17 +694,17 @@ export default function Upload({ onResult, onBack }: Props) {
                 )}
               </span>
               {uniqueValues[labelCol] ? (
-                <select
-                  value={positiveLabel}
-                  onChange={(e) => setPositiveLabel(e.target.value)}
-                >
-                  <option value="">Select value</option>
+                <div className="chip-group">
                   {uniqueValues[labelCol].map((v) => (
-                    <option key={v} value={v}>
+                    <button
+                      key={v}
+                      className={`chip ${positiveLabel === v ? "selected" : ""}`}
+                      onClick={() => setPositiveLabel(v)}
+                    >
                       {getOutcomeValueLabel(v)}
-                    </option>
+                    </button>
                   ))}
-                </select>
+                </div>
               ) : (
                 <input
                   type="text"

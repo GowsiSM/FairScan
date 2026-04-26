@@ -5,9 +5,11 @@ import "./BiasContributors.css";
 interface Props {
   contributors: BiasContributor[];
   sensitiveAttr: string;
+  aiNote?: string;
+  aiLoading?: boolean;
 }
 
-export default function BiasContributors({ contributors, sensitiveAttr }: Props) {
+export default function BiasContributors({ contributors, sensitiveAttr, aiNote, aiLoading }: Props) {
   const [animated, setAnimated] = useState(false);
 
   useEffect(() => {
@@ -18,6 +20,8 @@ export default function BiasContributors({ contributors, sensitiveAttr }: Props)
   if (!contributors || contributors.length === 0) return null;
 
   const max = Math.max(...contributors.map((c) => c.importance));
+  
+  const displayNote = aiNote || (aiLoading ? "Generating proxy analysis..." : `These features are both predictive of the outcome and correlated with ${sensitiveAttr} — meaning they may act as proxies for group membership.`);
 
   return (
     <section className="bias-contributors">
@@ -54,9 +58,8 @@ export default function BiasContributors({ contributors, sensitiveAttr }: Props)
         ))}
       </div>
 
-      <p className="bc-note">
-        These features are both predictive of the outcome <em>and</em> correlated
-        with {sensitiveAttr} — meaning they may act as proxies for group membership.
+      <p className={`bc-note ${aiLoading ? "skeleton-text" : ""}`}>
+        {displayNote}
       </p>
     </section>
   );

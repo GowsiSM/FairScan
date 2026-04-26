@@ -71,7 +71,7 @@ function FinalParityBars({
   );
 }
 
-export default function FixPanel({ before, fix, onDownload }: Props) {
+export default function FixPanel({ fix, onDownload }: Props) {
   const improvement = fix.bias_score_after - fix.bias_score_before;
 
   return (

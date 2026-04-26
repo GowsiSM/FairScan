@@ -48,33 +48,7 @@ body {
   flex-direction: column;
 }
 
-/* Header */
-.landing-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1.5rem 3rem;
-  border-bottom: 1px solid var(--border);
-}
-
-.logo-container {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.nav-icon {
-  width: 64px;
-  height: 64px;
-  color: var(--accent);
-}
-
-.logo {
-  font-family: var(--font-mono);
-  font-size: 28px;
-  letter-spacing: 0.04em;
-  color: var(--ink);
-}
+/* Header — now handled by Navbar component */
 
 .nav-cta {
   font-family: var(--font-body);
@@ -94,6 +68,19 @@ body {
 .nav-cta:hover {
   background: var(--surface-2);
   border-color: var(--accent);
+}
+
+.nav-cta.secondary {
+  display: inline-flex;
+  align-items: center;
+  color: var(--ink-muted);
+  border-color: var(--border);
+}
+
+.nav-cta.secondary:hover {
+  color: var(--ink);
+  border-color: var(--accent);
+  background: var(--accent-soft);
 }
 
 /* Hero */
@@ -208,7 +195,7 @@ body {
 }
 
 .impact-card {
-  padding: 2rem 3rem;
+  padding: 3rem 4rem;
   border-right: 1px solid var(--border);
   animation: fadeUp 0.5s ease both;
 }
@@ -232,16 +219,16 @@ body {
 .impact-stat {
   display: block;
   font-family: var(--font-display);
-  font-size: 3rem;
+  font-size: 3.8rem;
   color: var(--accent);
   line-height: 1;
-  margin-bottom: 0.6rem;
+  margin-bottom: 1rem;
 }
 
 .impact-story {
-  font-size: 0.9rem;
+  font-size: 1.15rem;
   color: var(--ink-muted);
-  line-height: 1.5;
+  line-height: 1.6;
   font-weight: 300;
 }
 

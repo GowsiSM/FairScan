@@ -36,6 +36,8 @@ def group_label(column: str, raw_value: str) -> str:
     return raw_value.replace(".0", "")
 
 
+import math
+
 def build_explanations(
     *,
     disparate_impact: float,
@@ -46,9 +48,9 @@ def build_explanations(
     outcome_label: str,
     analysis_type: str = "dataset",
 ) -> dict[str, str]:
-    di_percent = round(disparate_impact * 100)
-    spd_percent = round(abs(stat_parity_diff) * 100)
-    eod_percent = round(abs(equal_opp_diff) * 100)
+    di_percent = round(disparate_impact * 100) if not math.isnan(disparate_impact) else 0
+    spd_percent = round(abs(stat_parity_diff) * 100) if not math.isnan(stat_parity_diff) else 0
+    eod_percent = round(abs(equal_opp_diff) * 100) if not math.isnan(equal_opp_diff) else 0
 
     # Clean outcome label (e.g. "hired" -> "be hired")
     verb_label = outcome_label.lower().strip()
