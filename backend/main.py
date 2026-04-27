@@ -34,7 +34,7 @@ app = FastAPI(
     },
     license_info={
         "name": "MIT",
-    }
+    },
 )
 
 # Tighten CORS for security
