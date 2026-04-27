@@ -2,6 +2,7 @@ import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
 import { getFirestore, type Firestore } from "firebase/firestore";
 
+// Validate Firebase config before initialization
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
@@ -12,16 +13,38 @@ const firebaseConfig = {
   measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
 };
 
-const app = initializeApp(firebaseConfig);
+// Check for required Firebase config
+const requiredKeys = ["apiKey", "authDomain", "projectId", "appId"] as const;
+const missingKeys = requiredKeys.filter((key) => !firebaseConfig[key]);
 
-export const auth = getAuth(app);
+if (missingKeys.length > 0) {
+  console.error(
+    `[Firebase] Missing required config keys: ${missingKeys.join(", ")}\n` +
+      `Please create frontend/.env.local with your Firebase credentials from Firebase Console → Project Settings`,
+  );
+}
+
+let app;
+let auth: ReturnType<typeof getAuth> | null = null;
+
+try {
+  app = initializeApp(firebaseConfig);
+  auth = getAuth(app);
+  console.log("[Firebase] Initialized successfully");
+} catch (err) {
+  console.error("[Firebase] Initialization failed:", err);
+}
+
+export { auth };
 export const googleProvider = new GoogleAuthProvider();
 
 // Firestore — may fail if not enabled in Firebase Console
 let _db: Firestore | null = null;
 try {
-  _db = getFirestore(app);
+  if (app) {
+    _db = getFirestore(app);
+  }
 } catch (err) {
-  console.warn("Firestore not available:", err);
+  console.warn("[Firestore] Not available:", err);
 }
 export const db = _db;

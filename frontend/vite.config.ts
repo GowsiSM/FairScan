@@ -6,4 +6,8 @@ export default defineConfig({
   server: {
     port: 5173,
   },
+  define: {
+    // Ensure VITE_* variables are available at build time
+    __DEV__: JSON.stringify(true),
+  },
 });
