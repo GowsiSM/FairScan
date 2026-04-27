@@ -37,6 +37,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // If auth is not initialized (Firebase config missing), skip setup
+    if (!auth) {
+      console.warn("[Auth] Firebase not configured — auth unavailable");
+      setLoading(false);
+      return;
+    }
+
     // Safety net: if auth state never resolves (e.g. Firebase misconfigured),
     // stop the loading spinner after 5 seconds.
     const timeout = setTimeout(() => {
@@ -54,7 +61,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (firebaseUser) {
         // Fire-and-forget: update profile in background, never blocks the app
         saveUserProfile(firebaseUser).catch((err) =>
-          console.warn("Failed to save user profile:", err)
+          console.warn("Failed to save user profile:", err),
         );
       }
     });
@@ -65,6 +72,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signInWithGoogle = async () => {
+    if (!auth) {
+      throw new Error(
+        "Firebase Auth not configured. Check your .env.local file.",
+      );
+    }
     try {
       await signInWithPopup(auth, googleProvider);
     } catch (err) {
@@ -74,6 +86,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signOut = async () => {
+    if (!auth) return;
     await firebaseSignOut(auth);
   };
 
