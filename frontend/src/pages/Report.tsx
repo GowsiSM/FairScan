@@ -37,9 +37,9 @@ export default function Report({ result, onReset, onSelectHistory }: Props) {
   const [aiLoading, setAiLoading] = useState(!result.isReadOnly);
 
   const [historySidebarOpen, setHistorySidebarOpen] = useState(false);
-  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved">(
-    "idle",
-  );
+  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved">("idle");
+
+  const isModel = result.analysis_type === "model";
 
   // Reset fix panel when result changes (e.g. loaded from history)
   useEffect(() => {
@@ -49,7 +49,7 @@ export default function Report({ result, onReset, onSelectHistory }: Props) {
     setAiLoading(!result.isReadOnly);
     requestAnimationFrame(() => setVisible(true));
 
-    if (result.isReadOnly) return; // Skip AI fetch for archived reports
+    if (result.isReadOnly) return;
 
     const fetchInsights = async () => {
       try {
@@ -71,10 +71,7 @@ export default function Report({ result, onReset, onSelectHistory }: Props) {
     try {
       const r = await fixBias(result.session_id);
       setFixResult(r);
-      setTimeout(
-        () => fixRef.current?.scrollIntoView({ behavior: "smooth" }),
-        100,
-      );
+      setTimeout(() => fixRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
     } catch {
       setFixError("Fix failed. Please try again.");
     } finally {
@@ -96,17 +93,12 @@ export default function Report({ result, onReset, onSelectHistory }: Props) {
   };
 
   const scoreColor =
-    result.bias_score >= 70
-      ? "low"
-      : result.bias_score >= 40
-        ? "medium"
-        : "high";
+    result.bias_score >= 70 ? "low" : result.bias_score >= 40 ? "medium" : "high";
 
   const totalRecords = result.group_stats.reduce((sum, g) => sum + g.count, 0);
 
   const displayHeadline =
-    aiInsights?.headline ||
-    (aiLoading ? "Analyzing bias context..." : result.headline);
+    aiInsights?.headline || (aiLoading ? "Analyzing bias context..." : result.headline);
   const displaySummary =
     aiInsights?.summary ||
     (aiLoading ? "Generating AI summary from the dataset..." : result.summary);
@@ -118,22 +110,40 @@ export default function Report({ result, onReset, onSelectHistory }: Props) {
         onSave={result.isReadOnly ? undefined : handleSave}
         saveState={saveState}
         onReset={onReset}
-        reportMeta={{
-          domain: result.domain,
-          isReadOnly: result.isReadOnly,
-        }}
+        reportMeta={{ domain: result.domain, isReadOnly: !!result.isReadOnly }}
       />
 
       {/* ── Consolidated Bias Overview Card ── */}
       <section className="bias-overview-card">
-        {/* Left column: headline + stats + status badges + CTA */}
         <div className="boc-left">
+          {/* Eyebrow with mode badge */}
           <div className="boc-eyebrow">
             Scan complete{" "}
-            {aiLoading && (
-              <span className="spinner small" style={{ marginLeft: 8 }} />
-            )}
+            {aiLoading && <span className="spinner small" style={{ marginLeft: 8 }} />}
+            <span className={`mode-pill ${isModel ? "mode-pill--model" : "mode-pill--dataset"}`}>
+              {isModel ? (
+                <>
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="11" width="18" height="10" rx="2" />
+                    <circle cx="12" cy="5" r="2" />
+                    <path d="M12 7v4" />
+                  </svg>
+                  Model Predictions
+                </>
+              ) : (
+                <>
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M3 3v18h18" />
+                    <path d="M18 17V9" />
+                    <path d="M13 17V5" />
+                    <path d="M8 17v-3" />
+                  </svg>
+                  Training Data
+                </>
+              )}
+            </span>
           </div>
+
           <h1 className={`boc-headline ${aiLoading ? "skeleton-text" : ""}`}>
             {displayHeadline}
           </h1>
@@ -144,9 +154,7 @@ export default function Report({ result, onReset, onSelectHistory }: Props) {
           {/* Key scan stats */}
           <div className="boc-stats-row">
             <div className="boc-stat">
-              <span className="boc-stat-value">
-                {totalRecords.toLocaleString()}
-              </span>
+              <span className="boc-stat-value">{totalRecords.toLocaleString()}</span>
               <span className="boc-stat-label">Records scanned</span>
             </div>
             <div className="boc-stat-divider" />
@@ -156,103 +164,88 @@ export default function Report({ result, onReset, onSelectHistory }: Props) {
             </div>
             <div className="boc-stat-divider" />
             <div className="boc-stat">
-              <span
-                className="boc-stat-value"
-                style={{ textTransform: "capitalize" }}
-              >
+              <span className="boc-stat-value" style={{ textTransform: "capitalize" }}>
                 {result.sensitive_attr}
               </span>
               <span className="boc-stat-label">Sensitive attribute</span>
             </div>
           </div>
 
-          {/* Status indicator */}
           <div className="boc-status-row">
             <CertBadge score={result.bias_score} />
           </div>
         </div>
 
-        {/* Right column: fairness score gauge */}
         <div className="boc-right">
           <BiasScore score={result.bias_score} severity={scoreColor} />
         </div>
       </section>
 
-      {/* ── Fix Bias section ── */}
-      {!fixResult && !result.isReadOnly && (
-        <section className="fix-cta-section">
-          <div className="fix-cta-inner">
-            <div>
-              <div className="fix-cta-title">Ready to fix this?</div>
-              <div className="fix-cta-sub">
-                We'll rebalance your dataset using Reweighing — the same
-                technique used by IBM's AI Fairness 360.
-              </div>
-            </div>
-            {fixError && <div className="fix-error">{fixError}</div>}
-            <button className="fix-btn" onClick={handleFix} disabled={fixing}>
-              {fixing ? (
-                <>
-                  <span className="spinner dark" /> Applying fix…
-                </>
-              ) : (
-                "Fix bias →"
-              )}
-            </button>
-          </div>
-        </section>
-      )}
-
-      {/* ── Read-only banner (old report) ── */}
+      {/* ── Archived banner ── */}
       {result.isReadOnly && (
         <section className="archived-notice">
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="12" cy="12" r="10" />
             <line x1="12" y1="8" x2="12" y2="12" />
             <line x1="12" y1="16" x2="12.01" y2="16" />
           </svg>
           <span>
-            This is an <strong>archived report</strong>. Start a new scan to
-            apply bias fixes.
+            This is an <strong>archived report</strong>. Start a new scan to apply bias fixes.
           </span>
         </section>
       )}
 
-      {/* ── Analysis Type Context ── */}
-      {result.analysis_type && (
-        <section className="analysis-type-section">
-          <div className="analysis-type-banner">
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              {result.analysis_type === "dataset" ? (
-                <path d="M3 3v18h18" />
-              ) : (
-                <path d="M12 7v10M7 12h10" />
-              )}
-            </svg>
-            <span>
-              {result.analysis_type === "dataset"
-                ? "Training Data Analysis — Checking historical bias in raw dataset"
-                : "Model Predictions Analysis — Checking predictive bias in model outputs"}
-            </span>
-          </div>
+      {/* ── Fix / Advisory CTA — forks on analysis type ── */}
+      {!fixResult && !result.isReadOnly && (
+        <section className="fix-cta-section">
+          {isModel ? (
+            /* Model mode: no reweighing, show retrain advisory */
+            <div className="fix-cta-inner model-advisory">
+              <div className="model-advisory-icon">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 2a4 4 0 0 1 4 4v1h1a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1V6a4 4 0 0 1 4-4z" />
+                  <circle cx="12" cy="13" r="2" />
+                </svg>
+              </div>
+              <div className="model-advisory-body">
+                <div className="fix-cta-title">Model bias detected</div>
+                <div className="fix-cta-sub">
+                  Predictive bias in a trained model cannot be corrected by reweighing input data alone.
+                  Consider retraining with a fairness-aware algorithm, applying post-processing
+                  calibration, or auditing the training data for representation gaps.
+                </div>
+              </div>
+              <div className="model-advisory-steps">
+                <span className="advisory-step">
+                  <span className="advisory-step-dot">1</span>Audit training data
+                </span>
+                <span className="advisory-step">
+                  <span className="advisory-step-dot">2</span>Retrain with fairness constraints
+                </span>
+                <span className="advisory-step">
+                  <span className="advisory-step-dot">3</span>Apply post-processing calibration
+                </span>
+              </div>
+            </div>
+          ) : (
+            /* Dataset mode: reweighing fix button */
+            <div className="fix-cta-inner">
+              <div>
+                <div className="fix-cta-title">Ready to fix this?</div>
+                <div className="fix-cta-sub">
+                  We'll rebalance your dataset using Reweighing — the same technique used by IBM's AI Fairness 360.
+                </div>
+              </div>
+              {fixError && <div className="fix-error">{fixError}</div>}
+              <button className="fix-btn" onClick={handleFix} disabled={fixing}>
+                {fixing ? (
+                  <><span className="spinner dark" /> Applying fix…</>
+                ) : (
+                  "Fix bias →"
+                )}
+              </button>
+            </div>
+          )}
         </section>
       )}
 
@@ -262,6 +255,7 @@ export default function Report({ result, onReset, onSelectHistory }: Props) {
           <GroupChart
             stats={result.group_stats}
             sensitiveAttr={result.sensitive_attr}
+            analysisType={result.analysis_type as "dataset" | "model"}
           />
         </div>
 
@@ -272,24 +266,48 @@ export default function Report({ result, onReset, onSelectHistory }: Props) {
               sensitiveAttr={result.sensitive_attr}
               aiNote={aiInsights?.bias_contributors_note}
               aiLoading={aiLoading}
-              analysisType={result.analysis_type as any}
+              analysisType={result.analysis_type as "dataset" | "model"}
             />
           </div>
         )}
       </section>
 
-      {/* ── ANALYSIS SECTION ── */}
+      {/* ── Analysis Section ── */}
       <section className="report-analysis">
         <div className="section-label">
-          {result.analysis_type === "model"
-            ? "MODEL INSIGHTS"
-            : "DETAILED ANALYSIS"}
+          {isModel ? "MODEL INSIGHTS" : "DETAILED ANALYSIS"}
         </div>
 
-        <AiExplainer
-          explanation={aiInsights?.explanation}
-          loading={aiLoading}
-        />
+        {/* Context intro — brief mode-framing sentence */}
+        <div className="analysis-context-intro">
+          {isModel ? (
+            <>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 2a4 4 0 0 1 4 4v1h1a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1V6a4 4 0 0 1 4-4z" />
+                <circle cx="12" cy="13" r="2" />
+              </svg>
+              <span>
+                Evaluating <strong>predictive bias</strong> — comparing your model's predicted outcomes
+                against actual ground truth across demographic groups.
+              </span>
+            </>
+          ) : (
+            <>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 3v18h18" />
+                <path d="M18 17V9" />
+                <path d="M13 17V5" />
+                <path d="M8 17v-3" />
+              </svg>
+              <span>
+                Evaluating <strong>historical bias</strong> — checking whether your training data
+                contains systematic representation gaps across demographic groups.
+              </span>
+            </>
+          )}
+        </div>
+
+        <AiExplainer explanation={aiInsights?.explanation} loading={aiLoading} />
 
         <div className="metrics-grid">
           {result.metrics.map((m, i) => (
@@ -303,9 +321,7 @@ export default function Report({ result, onReset, onSelectHistory }: Props) {
           <FixPanel
             before={result}
             fix={fixResult}
-            onDownload={() =>
-              window.open(downloadUrl(fixResult.download_token))
-            }
+            onDownload={() => window.open(downloadUrl(fixResult.download_token))}
           />
         </div>
       )}

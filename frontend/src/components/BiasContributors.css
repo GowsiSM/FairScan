@@ -14,13 +14,19 @@
   width: 36px;
   height: 36px;
   border-radius: 10px;
-  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  background: var(--accent-soft);
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--accent);
   flex-shrink: 0;
   margin-top: 2px;
+}
+
+/* Model mode: same orange family, slightly deeper tint */
+.bc--model .bc-icon {
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  color: var(--accent);
 }
 
 .bc-title {
@@ -68,9 +74,18 @@
 
 .bc-fill {
   height: 100%;
-  background: linear-gradient(90deg, #d4522a, #e8733a);
+  background: linear-gradient(90deg, #d4522a, var(--accent));
   border-radius: 100px;
   transition: width 0.9s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+/* Model-mode bars: darker-to-lighter orange */
+.bc-fill--model {
+  background: linear-gradient(90deg, #c44a20, #ff9a7a);
+}
+
+.bc--model .bc-pct {
+  color: var(--accent);
 }
 
 .bc-pct {

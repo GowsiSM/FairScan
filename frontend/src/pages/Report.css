@@ -6,7 +6,6 @@
   transition:
     opacity 0.5s ease,
     transform 0.5s ease;
-  /* account for sticky navbar (52px) + floating bar (~44px) */
   padding-top: 0;
 }
 
@@ -34,11 +33,41 @@
 .boc-eyebrow {
   display: flex;
   align-items: center;
+  gap: 0.6rem;
   font-family: var(--font-mono);
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.12em;
   color: var(--accent);
+}
+
+/* ── Mode Pill ── */
+.mode-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  border-radius: 100px;
+  padding: 0.2rem 0.65rem;
+  border: 1px solid;
+  margin-left: 0.4rem;
+}
+
+.mode-pill--dataset {
+  color: var(--accent);
+  background: var(--accent-soft);
+  border-color: color-mix(in srgb, var(--accent) 25%, transparent);
+}
+
+/* Model mode pill: darker orange variant */
+.mode-pill--model {
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 30%, transparent);
 }
 
 .boc-headline {
@@ -114,30 +143,29 @@
   padding-top: 0.5rem;
 }
 
-/* ── Analysis Type Context Banner ── */
-/* KEY FIX: constrain to content width, not full viewport */
-.analysis-type-section {
-  padding: 0.9rem 3rem;
-  border-bottom: 1px solid var(--border);
-}
-
-.analysis-type-banner {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.7rem;
-  font-size: 12px;
+/* ── Analysis Context Intro (inside analysis section) ── */
+.analysis-context-intro {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  font-size: 13px;
   color: var(--ink-muted);
-  font-family: var(--font-mono);
+  line-height: 1.6;
+  margin-bottom: 1.5rem;
+  padding: 0.85rem 1.2rem;
   background: var(--surface-2);
   border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 0.5rem 1rem;
-  /* Do NOT use width: 100% — let it size to content */
+  border-radius: 10px;
 }
 
-.analysis-type-banner svg {
-  color: var(--accent);
+.analysis-context-intro svg {
   flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--ink-faint);
+}
+
+.analysis-context-intro strong {
+  color: var(--ink);
 }
 
 /* Archived banner */
@@ -147,8 +175,8 @@
   gap: 0.75rem;
   margin: 1.5rem 3rem;
   padding: 1rem 1.5rem;
-  background: rgba(167, 139, 250, 0.06);
-  border: 1px solid rgba(167, 139, 250, 0.18);
+  background: var(--accent-soft);
+  border: 1px solid color-mix(in srgb, var(--accent) 20%, transparent);
   border-radius: 12px;
   font-size: 14px;
   color: var(--ink-muted);
@@ -156,7 +184,7 @@
 
 .archived-notice svg {
   flex-shrink: 0;
-  color: #a78bfa;
+  color: var(--accent);
 }
 
 .archived-notice strong {
@@ -200,7 +228,7 @@
   margin-top: 1.5rem;
 }
 
-/* Fix CTA */
+/* ── Fix CTA ── */
 .fix-cta-section {
   padding: 2rem 3rem;
   border-bottom: 1px solid var(--border);
@@ -227,7 +255,72 @@
   font-size: 13px;
   color: var(--ink-muted);
   line-height: 1.6;
-  max-width: 420px;
+  max-width: 460px;
+}
+
+/* ── Model Advisory (replaces fix btn in model mode) ── */
+.model-advisory {
+  background: var(--accent-soft);
+  border-color: color-mix(in srgb, var(--accent) 20%, transparent);
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 1.8rem;
+}
+
+.model-advisory-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 25%, transparent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
+.model-advisory-body {
+  flex: 1;
+  min-width: 200px;
+}
+
+.model-advisory .fix-cta-title {
+  color: var(--accent);
+}
+
+.model-advisory-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  flex-shrink: 0;
+  padding-left: 1rem;
+  border-left: 1px solid color-mix(in srgb, var(--accent) 18%, transparent);
+}
+
+.advisory-step {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  font-size: 12px;
+  color: var(--ink-muted);
+  font-family: var(--font-mono);
+  white-space: nowrap;
+}
+
+.advisory-step-dot {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 28%, transparent);
+  color: var(--accent);
+  font-size: 10px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
 .fix-error {
@@ -309,9 +402,6 @@
     gap: 1rem;
     width: 100%;
   }
-  .analysis-type-section {
-    padding: 0.8rem 1.5rem;
-  }
   .report-charts-grid {
     padding: 2rem 1.5rem;
     grid-template-columns: 1fr;
@@ -329,7 +419,25 @@
     flex-direction: column;
     align-items: flex-start;
   }
+  .model-advisory {
+    flex-direction: column;
+  }
+  .model-advisory-steps {
+    border-left: none;
+    border-top: 1px solid color-mix(in srgb, var(--accent) 18%, transparent);
+    padding-left: 0;
+    padding-top: 0.8rem;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  .advisory-step {
+    white-space: normal;
+  }
   .archived-notice {
     margin: 1rem 1.5rem;
+  }
+  .analysis-context-intro {
+    font-size: 12px;
   }
 }

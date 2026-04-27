@@ -12,10 +12,28 @@
   gap: 0.3rem;
 }
 
+.chart-header-top {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
 .chart-title {
   font-size: 15px;
   font-weight: 500;
   color: var(--ink);
+}
+
+.chart-mode-tag {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border: 1px solid color-mix(in srgb, var(--accent) 25%, transparent);
+  border-radius: 100px;
+  padding: 0.15rem 0.55rem;
 }
 
 .chart-sub {
@@ -56,6 +74,15 @@
   background: var(--accent);
   border-radius: 100px;
   transition: width 0.85s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+/* Model-mode bar: deeper orange gradient */
+.bar-fill--model {
+  background: linear-gradient(90deg, #e8612a, var(--accent));
+}
+
+.group-chart.model-mode .bar-pct {
+  color: var(--accent);
 }
 
 .bar-pct {
