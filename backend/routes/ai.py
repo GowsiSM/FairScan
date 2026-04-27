@@ -84,18 +84,18 @@ def analyze_columns(req: AIAnalyzeRequest):
     )
 
     system_prompt = f"""
-You are an expert data ethicist and ML fairness engineer. Analyzing a structured dataset for the "{safe_domain}" domain.
+You are an expert data ethicist and ML fairness engineer. Analyzing a structured dataset for the "{safe_domain}" domain to be used with IBM AIF360 (AI Fairness 360).
 Columns: {safe_columns_list}
 Categorical Options: {safe_uniques}
 
 Identify:
-1. Primary sensitive column: Which column is the MOST likely primary sensitive demographic attribute.
+1. Primary sensitive column: Which column is the MOST likely primary sensitive demographic attribute (e.g. sex, race, age).
 2. Primary outcome column: Which column is the target/label.
 3. FOR EVERY COLUMN in the dataset:
    - If it contains numeric codes (e.g. 1/0, 1/2/3), provide a mapping in "group_mappings".
    - If it contains continuous numeric data (Age, Income, etc.), provide semantic ranges in "numerical_groups".
-   - For the outcome column, identify which exact value represents the "positive" (favorable/beneficial) outcome (e.g., getting a loan, being hired). Choose this STRICTLY from the dataset's unique values.
-   - Investigate the sensitive column and identify which exact value acts as the "privileged" (historically favored) group, and which acts as the "unprivileged" (historically disadvantaged) group. Choose these STRICTLY from the dataset's unique values.
+   - For the outcome column, identify the AIF360 "favorable_label": the exact value representing the "positive" (favorable/beneficial) outcome (e.g., getting a loan, being hired, high income). Choose this STRICTLY from the dataset's unique values. DO NOT output a placeholder; output the literal value.
+   - Investigate the sensitive column and identify which exact value acts as the AIF360 "privileged_group" (historically favored, higher expected beneficial outcomes), and which acts as the "unprivileged_group" (historically disadvantaged, lower expected beneficial outcomes). Choose these STRICTLY from the dataset's unique values. DO NOT output placeholders; output the literal values.
 
 Mandatory Numerical Grouping:
 - Use format: "GroupName (Min-Max)", "GroupName (Min+)", or "GroupName (<Max)".
@@ -103,11 +103,11 @@ Mandatory Numerical Grouping:
 
 Return EXACTLY this JSON structure and nothing else:
 {{
-  "sensitive_columns": {{ "<sensitive_col_name>": "<reasoning>" }},
-  "outcome_values": {{ "<outcome_col_name>": {{ "<value_1>": "<semantic_meaning_1>", "<value_2>": "<semantic_meaning_2>" }} }},
-  "group_mappings": {{ "<categorical_col>": {{ "<encoded_value>": "<semantic_label>" }} }},
-  "numerical_groups": {{ "<numeric_col>": ["<Group (Range)>"] }},
-  "suggested_roles": {{ "privileged_group": "<value_from_data>", "unprivileged_group": "<value_from_data>", "positive_outcome": "<value_from_data>" }}
+  "sensitive_columns": {{ "column_name": "most sensitive" }},
+  "outcome_values": {{ "col_name": {{ "val": "not impacted", "val2": "impacted" }}, "another_col": {{ "0": "no", "1": "yes" }} }},
+  "group_mappings": {{ "col_name": {{ "1": "Male", "0": "Female" }}, "another_col": {{ "2": "Other" }} }},
+  "numerical_groups": {{ "col_name": ["Young (0-20)", "Old (21+)"] }},
+  "suggested_roles": {{ "privileged_group": "exact_value_from_data", "unprivileged_group": "exact_value_from_data", "positive_outcome": "exact_value_from_data" }}
 }}
 """
 
