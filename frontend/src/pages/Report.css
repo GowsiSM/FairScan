@@ -6,98 +6,14 @@
   transition:
     opacity 0.5s ease,
     transform 0.5s ease;
+  /* account for sticky navbar (52px) + floating bar (~44px) */
+  padding-top: 0;
 }
 
 .report-page.visible {
   opacity: 1;
   transform: translateY(0);
 }
-
-.back-link {
-  background: none;
-  border: none;
-  font-family: var(--font-mono);
-  font-size: 12px;
-  color: var(--ink-muted);
-  cursor: pointer;
-  padding: 0.3rem 0.6rem;
-  border-radius: 6px;
-  transition: color 0.2s, background 0.2s;
-}
-
-.back-link:hover {
-  color: var(--accent);
-  background: var(--accent-soft);
-}
-
-.report-domain {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: var(--ink-muted);
-}
-
-.report-header-right {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.privacy-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  font-family: var(--font-mono);
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: #2a7d4f;
-  background: rgba(42, 125, 79, 0.08);
-  border: 1px solid rgba(42, 125, 79, 0.2);
-  border-radius: 100px;
-  padding: 0.3rem 0.7rem;
-}
-
-/* Archived report badge (replaces privacy badge for read-only) */
-.archived-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  font-family: var(--font-mono);
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: #a78bfa;
-  background: rgba(167, 139, 250, 0.08);
-  border: 1px solid rgba(167, 139, 250, 0.2);
-  border-radius: 100px;
-  padding: 0.3rem 0.7rem;
-}
-
-/* Banner shown instead of Fix Bias CTA for archived reports */
-.archived-notice {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  margin: 0 2rem 0;
-  padding: 1rem 1.5rem;
-  background: rgba(167, 139, 250, 0.06);
-  border: 1px solid rgba(167, 139, 250, 0.18);
-  border-radius: 12px;
-  font-size: 14px;
-  color: var(--ink-muted);
-}
-
-.archived-notice svg {
-  flex-shrink: 0;
-  color: #a78bfa;
-}
-
-.archived-notice strong {
-  color: var(--ink);
-}
-
 
 /* ── Bias Overview Card ── */
 .bias-overview-card {
@@ -116,6 +32,8 @@
 }
 
 .boc-eyebrow {
+  display: flex;
+  align-items: center;
   font-family: var(--font-mono);
   font-size: 11px;
   text-transform: uppercase;
@@ -137,6 +55,11 @@
   font-weight: 300;
   line-height: 1.7;
   max-width: 520px;
+}
+
+/* Skeleton loading states */
+.skeleton-text {
+  opacity: 0.4;
 }
 
 /* Mini stat strip */
@@ -180,12 +103,10 @@
   flex-shrink: 0;
 }
 
-/* Status badge row */
 .boc-status-row {
   margin-top: 0.4rem;
 }
 
-/* Right column: gauge */
 .boc-right {
   display: flex;
   align-items: flex-start;
@@ -193,13 +114,71 @@
   padding-top: 0.5rem;
 }
 
-/* ── Group chart section ── */
-.report-chart-section {
-  padding: 2.5rem 3rem;
+/* ── Analysis Type Context Banner ── */
+/* KEY FIX: constrain to content width, not full viewport */
+.analysis-type-section {
+  padding: 0.9rem 3rem;
   border-bottom: 1px solid var(--border);
 }
 
-/* ── Analysis Section ── */
+.analysis-type-banner {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+  font-size: 12px;
+  color: var(--ink-muted);
+  font-family: var(--font-mono);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.5rem 1rem;
+  /* Do NOT use width: 100% — let it size to content */
+}
+
+.analysis-type-banner svg {
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
+/* Archived banner */
+.archived-notice {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 1.5rem 3rem;
+  padding: 1rem 1.5rem;
+  background: rgba(167, 139, 250, 0.06);
+  border: 1px solid rgba(167, 139, 250, 0.18);
+  border-radius: 12px;
+  font-size: 14px;
+  color: var(--ink-muted);
+}
+
+.archived-notice svg {
+  flex-shrink: 0;
+  color: #a78bfa;
+}
+
+.archived-notice strong {
+  color: var(--ink);
+}
+
+/* ── Two-Column Charts Grid ── */
+.report-charts-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3rem;
+  padding: 2.5rem 3rem;
+  border-bottom: 1px solid var(--border);
+  align-items: start;
+}
+
+.chart-column {
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Analysis Section (metrics + AI explainer) ── */
 .report-analysis {
   padding: 3rem;
   border-bottom: 1px solid var(--border);
@@ -218,9 +197,10 @@
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 24px;
+  margin-top: 1.5rem;
 }
 
-/* Fix CTA — appears directly below overview card */
+/* Fix CTA */
 .fix-cta-section {
   padding: 2rem 3rem;
   border-bottom: 1px solid var(--border);
@@ -275,7 +255,6 @@
 
 .fix-btn:hover {
   opacity: 0.82;
-  color: orangered;
 }
 .fix-btn:disabled {
   opacity: 0.35;
@@ -291,6 +270,12 @@
   border-style: solid;
   border-radius: 50%;
   animation: spin 0.7s linear infinite;
+  display: inline-block;
+}
+
+.spinner.small {
+  width: 11px;
+  height: 11px;
 }
 
 @keyframes spin {
@@ -299,16 +284,18 @@
   }
 }
 
+/* ── Responsive ── */
 @media (max-width: 900px) {
   .metrics-grid {
     grid-template-columns: repeat(2, 1fr);
   }
+  .report-charts-grid {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
 }
 
 @media (max-width: 700px) {
-  .report-header {
-    padding: 1.2rem 1.5rem;
-  }
   .bias-overview-card {
     grid-template-columns: 1fr;
     padding: 2rem 1.5rem 1.5rem;
@@ -322,8 +309,12 @@
     gap: 1rem;
     width: 100%;
   }
-  .report-chart-section {
+  .analysis-type-section {
+    padding: 0.8rem 1.5rem;
+  }
+  .report-charts-grid {
     padding: 2rem 1.5rem;
+    grid-template-columns: 1fr;
   }
   .report-analysis {
     padding: 2rem 1.5rem;
@@ -337,5 +328,8 @@
   .fix-cta-inner {
     flex-direction: column;
     align-items: flex-start;
+  }
+  .archived-notice {
+    margin: 1rem 1.5rem;
   }
 }

@@ -28,11 +28,18 @@ export default function Report({ result, onReset, onSelectHistory }: Props) {
   const [visible, setVisible] = useState(false);
   const fixRef = useRef<HTMLDivElement>(null);
 
-  const [aiInsights, setAiInsights] = useState<{ headline: string; summary: string; bias_contributors_note: string; explanation: string } | null>(null);
+  const [aiInsights, setAiInsights] = useState<{
+    headline: string;
+    summary: string;
+    bias_contributors_note: string;
+    explanation: string;
+  } | null>(null);
   const [aiLoading, setAiLoading] = useState(!result.isReadOnly);
 
   const [historySidebarOpen, setHistorySidebarOpen] = useState(false);
-  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved">("idle");
+  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved">(
+    "idle",
+  );
 
   // Reset fix panel when result changes (e.g. loaded from history)
   useEffect(() => {
@@ -97,8 +104,12 @@ export default function Report({ result, onReset, onSelectHistory }: Props) {
 
   const totalRecords = result.group_stats.reduce((sum, g) => sum + g.count, 0);
 
-  const displayHeadline = aiInsights?.headline || (aiLoading ? "Analyzing bias context..." : result.headline);
-  const displaySummary = aiInsights?.summary || (aiLoading ? "Generating AI summary from the dataset..." : result.summary);
+  const displayHeadline =
+    aiInsights?.headline ||
+    (aiLoading ? "Analyzing bias context..." : result.headline);
+  const displaySummary =
+    aiInsights?.summary ||
+    (aiLoading ? "Generating AI summary from the dataset..." : result.summary);
 
   return (
     <div className={`report-page ${visible ? "visible" : ""}`}>
@@ -106,45 +117,36 @@ export default function Report({ result, onReset, onSelectHistory }: Props) {
         onHistory={() => setHistorySidebarOpen(true)}
         onSave={result.isReadOnly ? undefined : handleSave}
         saveState={saveState}
-        rightSlot={
-          <>
-            <button className="back-link" onClick={onReset}>
-              ← new scan
-            </button>
-            {!result.isReadOnly && (
-              <div className="privacy-badge">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" />
-                </svg>
-                <span>Data not stored</span>
-              </div>
-            )}
-            {result.isReadOnly && (
-              <div className="archived-badge">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="12" cy="12" r="10" />
-                  <polyline points="12 6 12 12 16 14" />
-                </svg>
-                <span>Archived report</span>
-              </div>
-            )}
-            <span className="report-domain">{result.domain}</span>
-          </>
-        }
+        onReset={onReset}
+        reportMeta={{
+          domain: result.domain,
+          isReadOnly: result.isReadOnly,
+        }}
       />
 
       {/* ── Consolidated Bias Overview Card ── */}
       <section className="bias-overview-card">
         {/* Left column: headline + stats + status badges + CTA */}
         <div className="boc-left">
-          <div className="boc-eyebrow">Scan complete {aiLoading && <span className="spinner small" style={{ marginLeft: 8 }} />}</div>
-          <h1 className={`boc-headline ${aiLoading ? "skeleton-text" : ""}`}>{displayHeadline}</h1>
-          <p className={`boc-summary ${aiLoading ? "skeleton-text" : ""}`}>{displaySummary}</p>
+          <div className="boc-eyebrow">
+            Scan complete{" "}
+            {aiLoading && (
+              <span className="spinner small" style={{ marginLeft: 8 }} />
+            )}
+          </div>
+          <h1 className={`boc-headline ${aiLoading ? "skeleton-text" : ""}`}>
+            {displayHeadline}
+          </h1>
+          <p className={`boc-summary ${aiLoading ? "skeleton-text" : ""}`}>
+            {displaySummary}
+          </p>
 
           {/* Key scan stats */}
           <div className="boc-stats-row">
             <div className="boc-stat">
-              <span className="boc-stat-value">{totalRecords.toLocaleString()}</span>
+              <span className="boc-stat-value">
+                {totalRecords.toLocaleString()}
+              </span>
               <span className="boc-stat-label">Records scanned</span>
             </div>
             <div className="boc-stat-divider" />
@@ -154,7 +156,12 @@ export default function Report({ result, onReset, onSelectHistory }: Props) {
             </div>
             <div className="boc-stat-divider" />
             <div className="boc-stat">
-              <span className="boc-stat-value" style={{ textTransform: "capitalize" }}>{result.sensitive_attr}</span>
+              <span
+                className="boc-stat-value"
+                style={{ textTransform: "capitalize" }}
+              >
+                {result.sensitive_attr}
+              </span>
               <span className="boc-stat-label">Sensitive attribute</span>
             </div>
           </div>
@@ -199,37 +206,85 @@ export default function Report({ result, onReset, onSelectHistory }: Props) {
       {/* ── Read-only banner (old report) ── */}
       {result.isReadOnly && (
         <section className="archived-notice">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
             <circle cx="12" cy="12" r="10" />
             <line x1="12" y1="8" x2="12" y2="12" />
             <line x1="12" y1="16" x2="12.01" y2="16" />
           </svg>
           <span>
-            This is an <strong>archived report</strong>. Start a new scan to apply bias fixes.
+            This is an <strong>archived report</strong>. Start a new scan to
+            apply bias fixes.
           </span>
         </section>
       )}
 
-      {/* ── Group outcome chart ── */}
-      <section className="report-chart-section">
-        <GroupChart
-          stats={result.group_stats}
-          sensitiveAttr={result.sensitive_attr}
-        />
+      {/* ── Analysis Type Context ── */}
+      {result.analysis_type && (
+        <section className="analysis-type-section">
+          <div className="analysis-type-banner">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              {result.analysis_type === "dataset" ? (
+                <path d="M3 3v18h18" />
+              ) : (
+                <path d="M12 7v10M7 12h10" />
+              )}
+            </svg>
+            <span>
+              {result.analysis_type === "dataset"
+                ? "Training Data Analysis — Checking historical bias in raw dataset"
+                : "Model Predictions Analysis — Checking predictive bias in model outputs"}
+            </span>
+          </div>
+        </section>
+      )}
+
+      {/* ── Group Outcome & Bias Contributors (Two-Column) ── */}
+      <section className="report-charts-grid">
+        <div className="chart-column">
+          <GroupChart
+            stats={result.group_stats}
+            sensitiveAttr={result.sensitive_attr}
+          />
+        </div>
+
+        {result.bias_contributors && result.bias_contributors.length > 0 && (
+          <div className="chart-column">
+            <BiasContributors
+              contributors={result.bias_contributors}
+              sensitiveAttr={result.sensitive_attr}
+              aiNote={aiInsights?.bias_contributors_note}
+              aiLoading={aiLoading}
+              analysisType={result.analysis_type as any}
+            />
+          </div>
+        )}
       </section>
 
       {/* ── ANALYSIS SECTION ── */}
       <section className="report-analysis">
-        <div className="section-label">ANALYSIS</div>
-
-        {result.bias_contributors && result.bias_contributors.length > 0 && (
-          <BiasContributors
-            contributors={result.bias_contributors}
-            sensitiveAttr={result.sensitive_attr}
-            aiNote={aiInsights?.bias_contributors_note}
-            aiLoading={aiLoading}
-          />
-        )}
+        <div className="section-label">
+          {result.analysis_type === "model"
+            ? "MODEL INSIGHTS"
+            : "DETAILED ANALYSIS"}
+        </div>
 
         <AiExplainer
           explanation={aiInsights?.explanation}
