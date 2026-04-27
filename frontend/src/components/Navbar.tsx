@@ -3,98 +3,201 @@ import { useNavigate, useLocation } from "react-router-dom";
 import "./Navbar.css";
 
 interface Props {
-  /** Optional extra element rendered on the right side before the user area */
-  rightSlot?: React.ReactNode;
-  /** When provided, a History button is rendered */
   onHistory?: () => void;
-  /** When provided, a Save button is rendered. Pass null to hide, "saving" for spinner, "saved" for check state */
   onSave?: () => void;
   saveState?: "idle" | "saving" | "saved";
+  onReset?: () => void;
+  reportMeta?: {
+    domain: string;
+    isReadOnly: boolean;
+  };
 }
 
-export default function Navbar({ rightSlot, onHistory, onSave, saveState = "idle" }: Props) {
+export default function Navbar({
+  onHistory,
+  onSave,
+  saveState = "idle",
+  onReset,
+  reportMeta,
+}: Props) {
   const { user, signInWithGoogle, signOut } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
   return (
-    <header className="navbar">
-      <button
-        className="navbar-brand"
-        onClick={() => navigate(location.pathname === "/" ? "/" : "/home")}
-      >
-        <img src="/weight.svg" className="navbar-icon" alt="" />
-        <span className="navbar-logo">fairscan</span>
-      </button>
+    <>
+      {/* ── Main navbar: brand + auth only ── */}
+      <header className="navbar">
+        <button
+          className="navbar-brand"
+          onClick={() => navigate(location.pathname === "/" ? "/" : "/home")}
+        >
+          <img src="/weight.svg" className="navbar-icon" alt="" />
+          <span className="navbar-logo">fairscan</span>
+        </button>
 
-      <div className="navbar-right">
-        {rightSlot}
-
-        {onHistory && (
-          <button className="navbar-icon-btn" onClick={onHistory} title="Scan history">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="10" />
-              <polyline points="12 6 12 12 16 14" />
-            </svg>
-            <span>History</span>
-          </button>
-        )}
-
-        {onSave && (
-          <button
-            className={`navbar-save-btn ${saveState}`}
-            onClick={onSave}
-            disabled={saveState === "saving" || saveState === "saved"}
-            title="Save report"
-          >
-            {saveState === "saving" && <span className="spinner dark small" />}
-            {saveState === "saved" && (
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="20 6 9 17 4 12" />
-              </svg>
-            )}
-            {saveState === "idle" && (
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
-                <polyline points="17 21 17 13 7 13 7 21" />
-                <polyline points="7 3 7 8 15 8" />
-              </svg>
-            )}
-            <span>
-              {saveState === "saving" ? "Saving…" : saveState === "saved" ? "Saved!" : "Save"}
-            </span>
-          </button>
-        )}
-
-        {user ? (
-          <div className="navbar-user">
-            {user.photoURL && (
-              <img
-                src={user.photoURL}
-                alt=""
-                className="navbar-avatar"
-                referrerPolicy="no-referrer"
-              />
-            )}
-            <span className="navbar-name">{user.displayName}</span>
-            <button className="navbar-sign-out" onClick={signOut}>
-              Sign out
+        <div className="navbar-right">
+          {user ? (
+            <div className="navbar-user">
+              {user.photoURL && (
+                <img
+                  src={user.photoURL}
+                  alt=""
+                  className="navbar-avatar"
+                  referrerPolicy="no-referrer"
+                />
+              )}
+              <span className="navbar-name">
+                {user.displayName?.split(" ")[0]}
+              </span>
+              <button className="navbar-sign-out" onClick={signOut}>
+                Sign out
+              </button>
+            </div>
+          ) : (
+            <button className="navbar-sign-in" onClick={signInWithGoogle}>
+              <GoogleIcon />
+              Sign in
             </button>
+          )}
+        </div>
+      </header>
+
+      {/* ── Floating action bar — only on report pages ── */}
+      {reportMeta && (
+        <div className="floating-bar">
+          <div className="floating-bar-inner">
+            {/* Left: back + context */}
+            <div className="fb-left">
+              {onReset && (
+                <button
+                  className="fb-btn fb-back"
+                  onClick={onReset}
+                  title="New scan"
+                >
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M19 12H5M12 19l-7-7 7-7" />
+                  </svg>
+                  <span>New scan</span>
+                </button>
+              )}
+              <span className="fb-divider" />
+              <span className="fb-domain">{reportMeta.domain}</span>
+              {reportMeta.isReadOnly && (
+                <span className="fb-archived-pill">Archived</span>
+              )}
+              {!reportMeta.isReadOnly && (
+                <span className="fb-privacy-pill">
+                  <svg
+                    width="10"
+                    height="10"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" />
+                  </svg>
+                  Data not stored
+                </span>
+              )}
+            </div>
+
+            {/* Right: history + save */}
+            <div className="fb-right">
+              {onHistory && (
+                <button
+                  className="fb-btn fb-icon-btn"
+                  onClick={onHistory}
+                  title="Scan history"
+                >
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <circle cx="12" cy="12" r="10" />
+                    <polyline points="12 6 12 12 16 14" />
+                  </svg>
+                  <span>History</span>
+                </button>
+              )}
+              {onSave && (
+                <button
+                  className={`fb-btn fb-save-btn ${saveState}`}
+                  onClick={onSave}
+                  disabled={saveState === "saving" || saveState === "saved"}
+                  title="Save report"
+                >
+                  {saveState === "saving" && (
+                    <span className="spinner dark small" />
+                  )}
+                  {saveState === "saved" && (
+                    <svg
+                      width="13"
+                      height="13"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                  )}
+                  {saveState === "idle" && (
+                    <svg
+                      width="13"
+                      height="13"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+                      <polyline points="17 21 17 13 7 13 7 21" />
+                      <polyline points="7 3 7 8 15 8" />
+                    </svg>
+                  )}
+                  <span>
+                    {saveState === "saving"
+                      ? "Saving…"
+                      : saveState === "saved"
+                        ? "Saved!"
+                        : "Save"}
+                  </span>
+                </button>
+              )}
+            </div>
           </div>
-        ) : (
-          <button className="navbar-sign-in" onClick={signInWithGoogle}>
-            <GoogleIcon />
-            Sign in with Google
-          </button>
-        )}
-      </div>
-    </header>
+        </div>
+      )}
+    </>
   );
 }
 
 function GoogleIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 48 48">
+    <svg width="16" height="16" viewBox="0 0 48 48">
       <path
         fill="#EA4335"
         d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"
