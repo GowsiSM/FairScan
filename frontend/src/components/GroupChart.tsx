@@ -18,9 +18,10 @@ export default function GroupChart({ stats, sensitiveAttr, analysisType = "datas
     return () => clearTimeout(t);
   }, []);
 
+  // Guide spec: "Selection Rate" for dataset, "Prediction Rate" for model
   const chartTitle = isModel
     ? `Prediction rate by ${sensitiveAttr}`
-    : `Outcome rate by ${sensitiveAttr}`;
+    : `Selection rate by ${sensitiveAttr}`;
 
   const chartSub = isModel
     ? "% predicted positive by the model"

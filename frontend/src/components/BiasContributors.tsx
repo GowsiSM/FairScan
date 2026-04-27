@@ -29,7 +29,8 @@ export default function BiasContributors({
 
   const max = Math.max(...contributors.map((c) => c.importance));
 
-  const title = isModel ? "What drives predictive bias" : "Why this bias exists";
+  // Guide spec: "Bias Root Causes" (dataset) vs "Prediction Bias Drivers" (model)
+  const title = isModel ? "Prediction bias drivers" : "Bias root causes";
   const subtitle = isModel
     ? `Features most correlated with biased predictions on ${sensitiveAttr}`
     : `Top features contributing to the ${sensitiveAttr} bias gap`;
@@ -106,4 +107,3 @@ export default function BiasContributors({
     </section>
   );
 }
-

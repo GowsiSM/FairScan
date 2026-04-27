@@ -60,6 +60,19 @@ def fix_bias(payload: FixRequest) -> dict:
     if session is None:
         raise HTTPException(status_code=404, detail="session_id not found")
 
+    # Guard: reweighing only applies to training data (dataset) analysis.
+    # Model prediction bias requires retraining — not a data fix.
+    analysis_type = session.config.get("analysis_type", "dataset")
+    if analysis_type == "model":
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "Reweighing cannot be applied to model prediction analysis. "
+                "Predictive bias requires retraining with fairness constraints or "
+                "applying post-processing calibration."
+            ),
+        )
+
     config = session.config
     prepared = prepare_binary_dataset(
         session.df_original,
@@ -87,6 +100,7 @@ def fix_bias(payload: FixRequest) -> dict:
         privileged_label=privileged_name,
         unprivileged_label=unprivileged_name,
         outcome_label=config["label_col"],
+        analysis_type="dataset",
     )
 
     before_analysis = session.analysis
