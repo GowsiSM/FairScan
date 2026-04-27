@@ -11,6 +11,7 @@ interface Props {
     domain: string;
     isReadOnly: boolean;
   };
+  rightSlot?: React.ReactNode;
 }
 
 export default function Navbar({
@@ -19,6 +20,7 @@ export default function Navbar({
   saveState = "idle",
   onReset,
   reportMeta,
+  rightSlot,
 }: Props) {
   const { user, signInWithGoogle, signOut } = useAuth();
   const navigate = useNavigate();
@@ -37,7 +39,9 @@ export default function Navbar({
         </button>
 
         <div className="navbar-right">
-          {user ? (
+          {rightSlot ? (
+            rightSlot
+          ) : user ? (
             <div className="navbar-user">
               {user.photoURL && (
                 <img

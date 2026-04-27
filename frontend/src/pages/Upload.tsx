@@ -231,12 +231,7 @@ export default function Upload({ onResult, onBack }: Props) {
     return val;
   };
 
-  const getGroupValueLabel = (col: string, val: string) => {
-    if (aiData?.group_mappings?.[col]?.[val]) {
-      return `${aiData.group_mappings[col][val]} (${val})`;
-    }
-    return val;
-  };
+
 
   // Auto-fill effect when AI data arrives
   const [hasAutoFilled, setHasAutoFilled] = useState(false);
