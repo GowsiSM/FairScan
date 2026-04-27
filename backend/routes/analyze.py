@@ -24,18 +24,21 @@ router = APIRouter()
 @router.post("/columns")
 async def columns(file: UploadFile = File(...)) -> dict:
     df = await parse_csv_upload(file)
-    
+
     unique_values = {}
     for col in df.columns:
         uniques = df[col].dropna().unique()
         if len(uniques) <= 100:
-            unique_values[col] = [str(x).replace(".0", "") if str(x).endswith(".0") else str(x) for x in uniques]
-            
+            unique_values[col] = [
+                str(x).replace(".0", "") if str(x).endswith(".0") else str(x)
+                for x in uniques
+            ]
+
     return {
         "columns": df.columns.tolist(),
         "preview": preview_json_rows(df, size=2),
         "row_count": int(len(df)),
-        "unique_values": unique_values
+        "unique_values": unique_values,
     }
 
 
@@ -51,7 +54,9 @@ async def analyze(
     unprivileged_value: str | None = Form(default=None),
     privileged_name_override: str | None = Form(default=None),
     unprivileged_name_override: str | None = Form(default=None),
-    positive_label: str = Form("1"),
+    positive_label: str = Form(
+        ..., description="The value representing a favorable outcome"
+    ),
     domain: str = Form("hiring"),
     analysis_type: str = Form("dataset"),
     prediction_col: str | None = Form(default=None),
@@ -85,8 +90,12 @@ async def analyze(
         metrics["equal_opp_diff"],
     )
 
-    privileged_name = privileged_name_override or group_label(sensitive_target, prepared.privileged_val)
-    unprivileged_name = unprivileged_name_override or group_label(sensitive_target, prepared.unprivileged_val)
+    privileged_name = privileged_name_override or group_label(
+        sensitive_target, prepared.privileged_val
+    )
+    unprivileged_name = unprivileged_name_override or group_label(
+        sensitive_target, prepared.unprivileged_val
+    )
 
     explanations = build_explanations(
         disparate_impact=metrics["disparate_impact"],
@@ -144,6 +153,7 @@ async def analyze(
     ]
 
     import math
+
     di = metrics["disparate_impact"]
     if math.isnan(di):
         prob_gap = 0
@@ -155,10 +165,18 @@ async def analyze(
         direction_word = "more"
         prob_gap = round((di - 1) * 100)
 
-    verb_label = (prediction_col if analysis_type == "model" else label_col).lower().replace("be ", "")
-    
-    rate_desc = "at a rate well below the 80% threshold" if direction_word == "less" else "at a disproportionately higher rate"
-    
+    verb_label = (
+        (prediction_col if analysis_type == "model" else label_col)
+        .lower()
+        .replace("be ", "")
+    )
+
+    rate_desc = (
+        "at a rate well below the 80% threshold"
+        if direction_word == "less"
+        else "at a disproportionately higher rate"
+    )
+
     if analysis_type == "model":
         headline = f"The model is {prob_gap}% {direction_word} likely to predict '{verb_label}' for {unprivileged_name}."
         summary = f"Your model exhibits predictive bias. It predicts positive outcomes for {unprivileged_name} {rate_desc} compared to {privileged_name}. This suggests the model has learned or amplified historical disadvantages."
@@ -171,7 +189,9 @@ async def analyze(
     try:
         loop = asyncio.get_event_loop()
         bias_contributors = await asyncio.wait_for(
-            loop.run_in_executor(_executor, compute_feature_importance, prepared, analysis_type),
+            loop.run_in_executor(
+                _executor, compute_feature_importance, prepared, analysis_type
+            ),
             timeout=8.0,
         )
     except (asyncio.TimeoutError, Exception):

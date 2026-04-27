@@ -298,30 +298,46 @@ export default function Upload({ onResult, onBack }: Props) {
   const [hasAutoFilled, setHasAutoFilled] = useState(false);
 
   useEffect(() => {
-    if (aiData && !hasAutoFilled) {
-      // Sensitive Column
-      const sensColRaw = Object.keys(aiData.sensitive_columns || {})[0];
-      const sensCol = columns.find(
-        (c) => c.toLowerCase() === sensColRaw?.toLowerCase(),
-      );
-      if (sensCol) {
-        setSensitiveAttr(sensCol);
+    if (aiData && columns.length > 0 && !hasAutoFilled) {
+      // 1. Sensitive Column
+      let sensCol = "";
+      if (aiData.sensitive_columns) {
+        const sensColRaw = Object.keys(aiData.sensitive_columns)[0];
+        sensCol = columns.find(
+          (c) => c.toLowerCase() === sensColRaw?.toLowerCase(),
+        ) || "";
+        if (sensCol) setSensitiveAttr(sensCol);
       }
 
-      // Outcome Column
-      const outColRaw = Object.keys(aiData.outcome_values || {})[0];
-      const outCol = columns.find(
-        (c) => c.toLowerCase() === outColRaw?.toLowerCase(),
-      );
-      if (outCol) {
-        setLabelCol(outCol);
+      // 2. Outcome Column
+      let outCol = "";
+      if (aiData.outcome_values) {
+        const outColRaw = Object.keys(aiData.outcome_values)[0];
+        outCol = columns.find(
+          (c) => c.toLowerCase() === outColRaw?.toLowerCase(),
+        ) || "";
+        if (outCol) setLabelCol(outCol);
+      }
 
-        // Find positive/impacted values
-        const vals = aiData.outcome_values[outColRaw];
-        const posVal = Object.keys(vals).find(
-          (v) => vals[v] === "not impacted",
-        );
-        if (posVal) setPositiveLabel(posVal);
+      // 3. Pre-select Privileged & Unprivileged from suggested_roles
+      if (sensCol && aiData.suggested_roles) {
+        const priv = aiData.suggested_roles.privileged_group;
+        const unpriv = aiData.suggested_roles.unprivileged_group;
+        
+        // Find them in the actual unique values for safety, or just trust the AI
+        if (priv) setPrivVal(priv);
+        if (unpriv) setUnprivVal(unpriv);
+      }
+
+      // 4. Pre-select Positive Outcome
+      if (aiData.suggested_roles?.positive_outcome) {
+        setPositiveLabel(aiData.suggested_roles.positive_outcome);
+      } else if (outCol && aiData.outcome_values[outCol]) {
+         const vals = aiData.outcome_values[outCol];
+         const posVal = Object.keys(vals).find(
+           (v) => vals[v].includes("positive") || vals[v].includes("favorable")
+         );
+         if (posVal) setPositiveLabel(posVal);
       }
 
       setHasAutoFilled(true);
