@@ -8,6 +8,7 @@ import {
 import {
   onAuthStateChanged,
   signInWithRedirect,
+  getRedirectResult,
   signOut as firebaseSignOut,
   type User,
 } from "firebase/auth";
@@ -52,6 +53,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return false;
       });
     }, 5000);
+
+    // Check redirect result on load
+    getRedirectResult(auth).catch((err) => {
+      console.error("Failed to complete sign in from redirect:", err);
+    });
 
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       clearTimeout(timeout);
