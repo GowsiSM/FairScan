@@ -7,8 +7,7 @@ import {
 } from "react";
 import {
   onAuthStateChanged,
-  signInWithRedirect,
-  getRedirectResult,
+  signInWithPopup,
   signOut as firebaseSignOut,
   type User,
 } from "firebase/auth";
@@ -25,8 +24,8 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: true,
-  signInWithGoogle: async () => {},
-  signOut: async () => {},
+  signInWithGoogle: async () => { },
+  signOut: async () => { },
 });
 
 export function useAuth() {
@@ -54,11 +53,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
     }, 5000);
 
-    // Check redirect result on load
-    getRedirectResult(auth).catch((err) => {
-      console.error("Failed to complete sign in from redirect:", err);
-    });
-
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       clearTimeout(timeout);
       setUser(firebaseUser);
@@ -84,8 +78,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       );
     }
     try {
-      await signInWithRedirect(auth, googleProvider);
+      const result = await signInWithPopup(auth, googleProvider);
+      setUser(result.user); // Update state immediately to avoid race conditions
     } catch (err: any) {
+      if (err.code === "auth/popup-blocked") {
+        // signInWithRedirect is broken in modern browsers (storage partitioning).
+        // Surface a friendly error so the user knows what to do.
+        throw new Error(
+          "popup-blocked: Please allow popups for this site in your browser settings, then try again.",
+        );
+      }
+      // auth/popup-closed-by-user — user dismissed intentionally, swallow silently
+      if (err.code === "auth/popup-closed-by-user" || err.code === "auth/cancelled-popup-request") {
+        return;
+      }
       console.error("Google sign-in failed:", err);
       throw err;
     }

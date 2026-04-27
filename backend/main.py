@@ -19,7 +19,7 @@ app = FastAPI(title="FairScan API", version="0.1.0")
 # Tighten CORS for security
 allowed_origins = os.getenv(
     "ALLOWED_ORIGINS",
-    "http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173"
+    "http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173,https://fairscan-a15f9.web.app,https://fairscan-a15f9.firebaseapp.com",
 ).split(",")
 
 app.add_middleware(
