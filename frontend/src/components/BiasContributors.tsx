@@ -7,9 +7,16 @@ interface Props {
   sensitiveAttr: string;
   aiNote?: string;
   aiLoading?: boolean;
+  analysisType?: "dataset" | "model";
 }
 
-export default function BiasContributors({ contributors, sensitiveAttr, aiNote, aiLoading }: Props) {
+export default function BiasContributors({
+  contributors,
+  sensitiveAttr,
+  aiNote,
+  aiLoading,
+  analysisType,
+}: Props) {
   const [animated, setAnimated] = useState(false);
 
   useEffect(() => {
@@ -20,14 +27,29 @@ export default function BiasContributors({ contributors, sensitiveAttr, aiNote, 
   if (!contributors || contributors.length === 0) return null;
 
   const max = Math.max(...contributors.map((c) => c.importance));
-  
-  const displayNote = aiNote || (aiLoading ? "Generating proxy analysis..." : `These features are both predictive of the outcome and correlated with ${sensitiveAttr} — meaning they may act as proxies for group membership.`);
+
+  const defaultNote =
+    analysisType === "model"
+      ? `These features are both predictive of the model's output and correlated with ${sensitiveAttr} — suggesting the model may have learned discriminatory patterns.`
+      : `These features are both predictive of the outcome and correlated with ${sensitiveAttr} — meaning they may act as proxies for group membership in your training data.`;
+
+  const displayNote =
+    aiNote || (aiLoading ? "Generating analysis..." : defaultNote);
 
   return (
     <section className="bias-contributors">
       <div className="bc-header">
         <div className="bc-icon">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
             <circle cx="11" cy="11" r="8" />
             <path d="m21 21-4.3-4.3" />
           </svg>
