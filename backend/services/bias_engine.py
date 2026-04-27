@@ -286,6 +286,12 @@ def _equal_opp_diff_from_model(
 
 
 def compute_metrics(prepared: PreparedData, analysis_type: str = "dataset") -> dict[str, Any]:
+    def sanitize_metric(val: float, default: float = 0.0) -> float:
+        import math
+        if math.isnan(val) or math.isinf(val):
+            return default
+        return float(val)
+
     if analysis_type == "model" and prepared.pred_dataset is not None:
         # For model predictions, calculate metrics on the predicted labels
         metric = BinaryLabelDatasetMetric(
@@ -293,8 +299,8 @@ def compute_metrics(prepared: PreparedData, analysis_type: str = "dataset") -> d
             privileged_groups=prepared.privileged_groups,
             unprivileged_groups=prepared.unprivileged_groups,
         )
-        di = float(metric.disparate_impact())
-        spd = float(metric.statistical_parity_difference())
+        di = sanitize_metric(metric.disparate_impact(), 1.0)
+        spd = sanitize_metric(metric.statistical_parity_difference(), 0.0)
 
         # Equal Opportunity is True Positive Rate diff
         # We can calculate this directly comparing true labels vs predicted labels
@@ -304,7 +310,7 @@ def compute_metrics(prepared: PreparedData, analysis_type: str = "dataset") -> d
             privileged_groups=prepared.privileged_groups,
             unprivileged_groups=prepared.unprivileged_groups,
         )
-        eod = float(class_metric.equal_opportunity_difference())
+        eod = sanitize_metric(class_metric.equal_opportunity_difference(), 0.0)
 
     else:
         # For dataset historical bias, calculate metrics on the ground truth
@@ -313,8 +319,8 @@ def compute_metrics(prepared: PreparedData, analysis_type: str = "dataset") -> d
             privileged_groups=prepared.privileged_groups,
             unprivileged_groups=prepared.unprivileged_groups,
         )
-        di = float(metric.disparate_impact())
-        spd = float(metric.statistical_parity_difference())
+        di = sanitize_metric(metric.disparate_impact(), 1.0)
+        spd = sanitize_metric(metric.statistical_parity_difference(), 0.0)
         # EOD approximation: difference in positive rates (no proxy model needed for dataset mode)
         # This is equivalent to statistical parity difference for binary outcomes
         eod = spd  # Positive rate gap serves as the EOD proxy for historical dataset bias

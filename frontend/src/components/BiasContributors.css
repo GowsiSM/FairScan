@@ -31,14 +31,14 @@
 
 .bc-title {
   font-family: var(--font-display);
-  font-size: 1.1rem;
+  font-size: 1.35rem;
   font-weight: 500;
   color: var(--ink);
   margin: 0 0 0.15rem;
 }
 
 .bc-sub {
-  font-size: 13px;
+  font-size: 15px;
   color: var(--ink-muted);
   margin: 0;
 }
@@ -57,7 +57,7 @@
 }
 
 .bc-feature {
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 500;
   color: var(--ink);
   min-width: 130px;
@@ -90,7 +90,7 @@
 
 .bc-pct {
   font-family: var(--font-mono);
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 600;
   color: var(--accent);
   min-width: 44px;
@@ -98,7 +98,7 @@
 }
 
 .bc-note {
-  font-size: 12px;
+  font-size: 14px;
   color: var(--ink-faint);
   line-height: 1.6;
   margin: 0;

@@ -21,7 +21,7 @@
   align-items: center;
   gap: 0.5rem;
   font-family: var(--font-mono);
-  font-size: 10.5px;
+  font-size: 14px;
   text-transform: uppercase;
   letter-spacing: 0.1em;
   font-weight: 600;
@@ -50,11 +50,13 @@
 }
 
 @keyframes pulse-dot {
+
   0%,
   100% {
     opacity: 0.3;
     transform: scale(0.85);
   }
+
   50% {
     opacity: 1;
     transform: scale(1.1);
@@ -85,18 +87,22 @@
 .ae-skeleton-line.long {
   width: 92%;
 }
+
 .ae-skeleton-line.medium {
   width: 74%;
 }
+
 .ae-skeleton-line.short {
   width: 55%;
 }
 
 @keyframes shimmer {
+
   0%,
   100% {
     opacity: 0.5;
   }
+
   50% {
     opacity: 1;
   }
@@ -111,7 +117,7 @@
 }
 
 .ae-para {
-  font-size: 14px;
+  font-size: 18px;
   line-height: 1.75;
   color: var(--ink-muted);
   font-weight: 300;
@@ -134,7 +140,7 @@
 
 /* First paragraph gets a slightly heavier weight — like a lede */
 .ae-para:first-child {
-  font-size: 14.5px;
+  font-size: 17px;
   color: var(--ink);
   font-weight: 400;
   border-left: 2px solid var(--accent);

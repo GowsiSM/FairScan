@@ -11,6 +11,25 @@ load_dotenv()
 
 router = APIRouter()
 
+def parse_json_safely(text: str):
+    """Extracts JSON from text, handling markdown blocks if present."""
+    # Remove markdown code blocks if present
+    text = re.sub(r"```(?:json)?\s*([\s\S]*?)\s*```", r"\1", text).strip()
+    
+    try:
+        return json.loads(text, strict=False)
+    except json.JSONDecodeError as e:
+        # Fallback: try to find the first { and last }
+        start = text.find("{")
+        end = text.rfind("}")
+        if start != -1 and end != -1:
+            try:
+                return json.loads(text[start:end+1], strict=False)
+            except:
+                pass
+        raise e
+
+
 class AIAnalyzeRequest(BaseModel):
     columns: list[str]
     unique_values: dict[str, list[str]]
@@ -52,25 +71,23 @@ Columns: {safe_columns_list}
 Categorical Options: {safe_uniques}
 
 Identify:
-1. Which column is the MOST likely primary sensitive demographic attribute (e.g., gender, race, age). If multiple exist, prioritize gender or race as they are standard for initial scans. 
-2. For the "outcome" (label) column, identify which value represents the "favorable" (not impacted/successful) outcome and which is "unfavorable" (impacted/failed).
-3. For the identified sensitive column, map its raw categorical values to human-readable group names (e.g., map "1" to "Male" and "0" to "Female"). 
-4. MANDATORY GROUPING: If the identified sensitive column contains continuous NUMERICAL data (like Age, Income, or Score), you MUST provide a list of semantic category ranges to help the user group these values. 
-   - Format each range exactly as "GroupName (Min-Max)" or "GroupName (Min+)" or "GroupName (<Max)".
-   - Example for Age: ["Child (0-17)", "Adult (18-64)", "Senior (65+)"]
-   - If the column is strictly categorical (e.g. "Male"/"Female" or "1"/"0"), leave the "numerical_groups" dictionary empty for that column.
+1. Primary sensitive column: Which column is the MOST likely primary sensitive demographic attribute.
+2. Primary outcome column: Which column is the target/label.
+3. FOR EVERY COLUMN in the dataset:
+   - If it contains numeric codes (e.g. 1/0, 1/2/3), provide a mapping in "group_mappings".
+   - If it contains continuous numeric data (Age, Income, etc.), provide semantic ranges in "numerical_groups".
+   - For any column that looks like an outcome/label, provide "not impacted"/"impacted" mappings in "outcome_values".
 
-Priority for sensitive columns: 
-- If 'gender' or 'sex' exists, pick that first.
-- If 'race' or 'ethnicity' exists, pick that next.
-- If 'age' exists, pick that last.
+Mandatory Numerical Grouping:
+- Use format: "GroupName (Min-Max)", "GroupName (Min+)", or "GroupName (<Max)".
+- Cover the full range of values seen in the data.
 
 Return EXACTLY this JSON structure and nothing else:
 {{
-  "sensitive_columns": {{ "column_name_here": "most sensitive" }},
-  "outcome_values": {{ "outcome_col_name": {{ "value_exactly_as_given_in_options": "not impacted", "other_value": "impacted" }} }},
-  "group_mappings": {{ "column_name_here": {{ "1": "Male", "0": "Female" }} }},
-  "numerical_groups": {{ "column_name_here": ["Group 1 (0-10)", "Group 2 (11+)"] }}
+  "sensitive_columns": {{ "column_name": "most sensitive" }},
+  "outcome_values": {{ "col_name": {{ "val": "not impacted", "val2": "impacted" }}, "another_col": {{ ... }} }},
+  "group_mappings": {{ "col_name": {{ "1": "Male", "0": "Female" }}, "another_col": {{ ... }} }},
+  "numerical_groups": {{ "col_name": ["Young (0-20)", "Old (21+)"], "another_col": [...] }}
 }}
 """
     
@@ -88,7 +105,7 @@ Return EXACTLY this JSON structure and nothing else:
         }
         
         payload = {
-            "model": "google/gemini-2.5-flash",
+            "model": "google/gemini-2.0-flash-001",
             "messages": [
                 {"role": "user", "content": system_prompt}
             ],
@@ -100,8 +117,11 @@ Return EXACTLY this JSON structure and nothing else:
             res.raise_for_status()
             data = res.json()
             
+            if "choices" not in data or not data["choices"]:
+                raise Exception(f"Invalid response format from OpenRouter: {data}")
+                
             content = data["choices"][0]["message"]["content"]
-            return json.loads(content, strict=False)
+            return parse_json_safely(content)
         except Exception as e:
             print(f"OpenRouter Error: {e}")
             raise HTTPException(status_code=500, detail=f"All OpenRouter models failed. Last error: {str(e)}")

@@ -604,85 +604,157 @@ export default function Upload({ onResult, onBack }: Props) {
               )}
             </div>
 
+            <span className="field-label" style={{ marginBottom: 6 }}>
+              Choose the values:{" "}
+              {aiData && <span className="ai-badge">★ AI suggested</span>}
+            </span>
+
             <div className="field-row">
               <label className="field half">
                 <span className="field-label">Privileged group value</span>
-                {uniqueValues[sensitiveAttr] || aiData?.numerical_groups?.[sensitiveAttr] ? (
-                  <div className="chip-group">
-                    {/* Render Numerical Group Chips (if any) */}
-                    {aiData?.numerical_groups?.[sensitiveAttr]
-                      ?.filter((grp: string) => grp !== unprivVal)
-                      .map((grp: string) => (
-                        <button
-                          key={grp}
-                          className={`chip ${privVal === grp ? "selected" : ""}`}
-                          onClick={() => setPrivVal(grp)}
-                        >
-                          ✦ {grp}
-                        </button>
-                      ))}
+                {(() => {
+                  const numGroups = aiData?.numerical_groups?.[sensitiveAttr];
+                  const mappings = aiData?.group_mappings?.[sensitiveAttr];
+                  const rawVals = uniqueValues[sensitiveAttr];
 
-                    {/* Render Categorical Values */}
-                    {(uniqueValues[sensitiveAttr] || [])
-                      .filter((v) => v !== unprivVal)
-                      .map((v) => (
-                        <button
-                          key={v}
-                          className={`chip ${privVal === v ? "selected" : ""}`}
-                          onClick={() => setPrivVal(v)}
-                        >
-                          {getGroupValueLabel(sensitiveAttr, v)}
-                        </button>
-                      ))}
-                  </div>
-                ) : (
-                  <input
-                    type="text"
-                    value={privVal}
-                    onChange={(e) => setPrivVal(e.target.value)}
-                    placeholder={getGroupPlaceholder("priv")}
-                  />
-                )}
+                  if (numGroups) {
+                    // AI numeric ranges — highest priority
+                    return (
+                      <div className="chip-group">
+                        {numGroups
+                          .filter((grp: string) => grp !== unprivVal)
+                          .map((grp: string) => (
+                            <button
+                              key={grp}
+                              className={`chip ${privVal === grp ? "selected" : ""}`}
+                              onClick={() => setPrivVal(grp)}
+                            >
+                              ✦ {grp}
+                            </button>
+                          ))}
+                      </div>
+                    );
+                  }
+
+                  if (mappings) {
+                    // AI categorical mappings — show only mapped values
+                    return (
+                      <div className="chip-group">
+                        {Object.entries(mappings)
+                          .filter(([v]) => v !== unprivVal)
+                          .map(([v, label]) => (
+                            <button
+                              key={v}
+                              className={`chip ${privVal === v ? "selected" : ""}`}
+                              onClick={() => setPrivVal(v)}
+                            >
+                              ✦ {label as string}
+                            </button>
+                          ))}
+                      </div>
+                    );
+                  }
+
+                  if (rawVals) {
+                    // Fallback — raw unique values
+                    return (
+                      <div className="chip-group">
+                        {rawVals
+                          .filter((v) => v !== unprivVal)
+                          .map((v) => (
+                            <button
+                              key={v}
+                              className={`chip ${privVal === v ? "selected" : ""}`}
+                              onClick={() => setPrivVal(v)}
+                            >
+                              {v}
+                            </button>
+                          ))}
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <input
+                      type="text"
+                      value={privVal}
+                      onChange={(e) => setPrivVal(e.target.value)}
+                      placeholder={getGroupPlaceholder("priv")}
+                    />
+                  );
+                })()}
               </label>
 
               <label className="field half">
                 <span className="field-label">Unprivileged group value</span>
-                {uniqueValues[sensitiveAttr] || aiData?.numerical_groups?.[sensitiveAttr] ? (
-                  <div className="chip-group">
-                    {/* Render Numerical Group Chips (if any) */}
-                    {aiData?.numerical_groups?.[sensitiveAttr]
-                      ?.filter((grp: string) => grp !== privVal)
-                      .map((grp: string) => (
-                        <button
-                          key={grp}
-                          className={`chip ${unprivVal === grp ? "selected" : ""}`}
-                          onClick={() => setUnprivVal(grp)}
-                        >
-                          ✦ {grp}
-                        </button>
-                      ))}
+                {(() => {
+                  const numGroups = aiData?.numerical_groups?.[sensitiveAttr];
+                  const mappings = aiData?.group_mappings?.[sensitiveAttr];
+                  const rawVals = uniqueValues[sensitiveAttr];
 
-                    {/* Render Categorical Values */}
-                    {(uniqueValues[sensitiveAttr] || [])
-                      .filter((v) => v !== privVal)
-                      .map((v) => (
-                        <button
-                          key={v}
-                          className={`chip ${unprivVal === v ? "selected" : ""}`}
-                          onClick={() => setUnprivVal(v)}
-                        >
-                          {getGroupValueLabel(sensitiveAttr, v)}
-                        </button>
-                      ))}
-                  </div>
-                ) : (
-                  <input
-                    type="text"
-                    value={unprivVal}
-                    onChange={(e) => setUnprivVal(e.target.value)}
-                    placeholder={getGroupPlaceholder("unpriv")}
-                  />
-                )}
+                  if (numGroups) {
+                    return (
+                      <div className="chip-group">
+                        {numGroups
+                          .filter((grp: string) => grp !== privVal)
+                          .map((grp: string) => (
+                            <button
+                              key={grp}
+                              className={`chip ${unprivVal === grp ? "selected" : ""}`}
+                              onClick={() => setUnprivVal(grp)}
+                            >
+                              ✦ {grp}
+                            </button>
+                          ))}
+                      </div>
+                    );
+                  }
+
+                  if (mappings) {
+                    return (
+                      <div className="chip-group">
+                        {Object.entries(mappings)
+                          .filter(([v]) => v !== privVal)
+                          .map(([v, label]) => (
+                            <button
+                              key={v}
+                              className={`chip ${unprivVal === v ? "selected" : ""}`}
+                              onClick={() => setUnprivVal(v)}
+                            >
+                              ✦ {label as string}
+                            </button>
+                          ))}
+                      </div>
+                    );
+                  }
+
+                  if (rawVals) {
+                    return (
+                      <div className="chip-group">
+                        {rawVals
+                          .filter((v) => v !== privVal)
+                          .map((v) => (
+                            <button
+                              key={v}
+                              className={`chip ${unprivVal === v ? "selected" : ""}`}
+                              onClick={() => setUnprivVal(v)}
+                            >
+                              {v}
+                            </button>
+                          ))}
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <input
+                      type="text"
+                      value={unprivVal}
+                      onChange={(e) => setUnprivVal(e.target.value)}
+                      placeholder={getGroupPlaceholder("unpriv")}
+                    />
+                  );
+                })()}
               </label>
             </div>
 

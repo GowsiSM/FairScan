@@ -31,7 +31,7 @@ export default function MetricCard({ metric, delay }: Props) {
         <div className="metric-name">{metric.label}</div>
         <div className="metric-story">{metric.story}</div>
         <div className="metric-value" style={{ color: severityColors[metric.severity] }}>
-          {metric.value.toFixed(2)}
+          {typeof metric.value === 'number' && !isNaN(metric.value) ? metric.value.toFixed(2) : "N/A"}
         </div>
         <div className="metric-threshold">
           threshold: {metric.threshold}

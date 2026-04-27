@@ -22,7 +22,7 @@
 
 .fix-eyebrow {
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: 14px;
   text-transform: uppercase;
   letter-spacing: 0.12em;
   color: #2a7d4f;
@@ -43,7 +43,7 @@
 }
 
 .fix-desc {
-  font-size: 14px;
+  font-size: 16px;
   color: var(--ink-muted);
   font-weight: 300;
   line-height: 1.6;
@@ -76,7 +76,7 @@
 
 .ba-label {
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: 13px;
   text-transform: uppercase;
   letter-spacing: 0.1em;
   color: var(--ink-faint);
@@ -91,7 +91,7 @@
 
 .ba-sub {
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: 14px;
   color: var(--ink-faint);
   margin-bottom: 0.6rem;
 }
@@ -108,7 +108,7 @@
 .ba-metric {
   display: flex;
   justify-content: space-between;
-  font-size: 13px;
+  font-size: 15px;
 }
 
 .ba-metric-name {
@@ -117,7 +117,7 @@
 
 .ba-metric-val {
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: 14px;
   color: var(--ink);
 }
 
@@ -156,7 +156,7 @@
 }
 
 .pb-title {
-  font-size: 14px;
+  font-size: 17px;
   font-weight: 500;
   color: var(--ink);
 }
@@ -277,14 +277,14 @@
 }
 
 .dl-title {
-  font-size: 14px;
+  font-size: 17px;
   font-weight: 500;
   margin-bottom: 0.3rem;
   color: var(--ink);
 }
 
 .dl-sub {
-  font-size: 12px;
+  font-size: 14px;
   color: var(--ink-muted);
   line-height: 1.5;
 }

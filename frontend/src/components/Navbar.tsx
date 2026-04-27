@@ -96,7 +96,10 @@ export default function Navbar({
                 <span className="fb-archived-pill">Archived</span>
               )}
               {!reportMeta.isReadOnly && (
-                <span className="fb-privacy-pill">
+                <span
+                  className="fb-privacy-pill"
+                  data-tooltip="The dataset uploaded is not stored anywhere. Only the analysis report will be stored when the user clicks save."
+                >
                   <svg
                     width="10"
                     height="10"

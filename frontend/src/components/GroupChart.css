@@ -19,7 +19,7 @@
 }
 
 .chart-title {
-  font-size: 15px;
+  font-size: 18px;
   font-weight: 500;
   color: var(--ink);
 }
@@ -38,7 +38,7 @@
 
 .chart-sub {
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: 13px;
   color: var(--ink-faint);
 }
 
@@ -55,7 +55,7 @@
 }
 
 .bar-label {
-  font-size: 13px;
+  font-size: 15px;
   color: var(--ink);
   min-width: 110px;
   font-weight: 500;
@@ -87,7 +87,7 @@
 
 .bar-pct {
   font-family: var(--font-mono);
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 500;
   color: var(--accent);
   min-width: 46px;
