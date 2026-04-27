@@ -17,6 +17,7 @@ export default function Landing({ onStart, onSelectHistory }: Props) {
   const heroRef = useRef<HTMLDivElement>(null);
   const { user, signInWithGoogle } = useAuth();
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [authError, setAuthError] = useState("");
 
   useEffect(() => {
     const el = heroRef.current;
@@ -28,11 +29,17 @@ export default function Landing({ onStart, onSelectHistory }: Props) {
     if (user) {
       onStart();
     } else {
+      setAuthError("");
       try {
         await signInWithGoogle();
         onStart();
-      } catch {
-        // user closed the popup — do nothing
+      } catch (err: any) {
+        if (err?.message?.startsWith("popup-blocked")) {
+          setAuthError(
+            "Popups are blocked by your browser. Please allow popups for this site and try again.",
+          );
+        }
+        // other errors (e.g. network) — swallow, user can retry
       }
     }
   };
@@ -79,6 +86,17 @@ export default function Landing({ onStart, onSelectHistory }: Props) {
             <button className="cta-primary" onClick={handleCta}>
               Scan your dataset
             </button>
+            {authError && (
+              <p style={{
+                marginTop: "0.75rem",
+                fontSize: "0.8rem",
+                color: "#f87171",
+                maxWidth: 340,
+                lineHeight: 1.5,
+              }}>
+                ⚠️ {authError}
+              </p>
+            )}
           </div>
           <div className="hero-visual">
             <AnimatedSvg />

@@ -8,8 +8,6 @@ import {
 import {
   onAuthStateChanged,
   signInWithPopup,
-  signInWithRedirect,
-  getRedirectResult,
   signOut as firebaseSignOut,
   type User,
 } from "firebase/auth";
@@ -45,11 +43,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(false);
       return;
     }
-
-    // Check if we just returned from a redirect sign-in flow
-    getRedirectResult(auth).catch((err) => {
-      console.error("[Auth] Error after redirect sign-in:", err);
-    });
 
     // Safety net: if auth state never resolves (e.g. Firebase misconfigured),
     // stop the loading spinner after 5 seconds.
@@ -87,10 +80,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       await signInWithPopup(auth, googleProvider);
     } catch (err: any) {
-      // If the browser blocked the popup, fall back to redirect
       if (err.code === "auth/popup-blocked") {
-        console.warn("[Auth] Popup blocked — falling back to redirect...");
-        await signInWithRedirect(auth, googleProvider);
+        // signInWithRedirect is broken in modern browsers (storage partitioning).
+        // Surface a friendly error so the user knows what to do.
+        throw new Error(
+          "popup-blocked: Please allow popups for this site in your browser settings, then try again.",
+        );
+      }
+      // auth/popup-closed-by-user — user dismissed intentionally, swallow silently
+      if (err.code === "auth/popup-closed-by-user" || err.code === "auth/cancelled-popup-request") {
         return;
       }
       console.error("Google sign-in failed:", err);

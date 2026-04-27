@@ -59,7 +59,20 @@ export default function Navbar({
               </button>
             </div>
           ) : (
-            <button className="navbar-sign-in" onClick={signInWithGoogle}>
+            <button
+              className="navbar-sign-in"
+              onClick={async () => {
+                try {
+                  await signInWithGoogle();
+                } catch (err: any) {
+                  if (err?.message?.startsWith("popup-blocked")) {
+                    alert(
+                      "Popups are blocked by your browser. Please allow popups for this site and try again.",
+                    );
+                  }
+                }
+              }}
+            >
               <GoogleIcon />
               Sign in
             </button>
