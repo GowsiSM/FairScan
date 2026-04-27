@@ -225,6 +225,8 @@ async def analyze(
                 "privileged_val": prepared.privileged_val,
                 "unprivileged_val": prepared.unprivileged_val,
                 "positive_label": prepared.positive_label,
+                "privileged_name_override": privileged_name_override,
+                "unprivileged_name_override": unprivileged_name_override,
                 "domain": domain,
                 "prediction_col": prepared.prediction_col,
                 "analysis_type": analysis_type,

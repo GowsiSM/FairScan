@@ -90,8 +90,8 @@ def fix_bias(payload: FixRequest) -> dict:
         after_metrics["equal_opp_diff"],
     )
 
-    privileged_name = group_label(config["sensitive_col"], config["privileged_val"])
-    unprivileged_name = group_label(config["sensitive_col"], config["unprivileged_val"])
+    privileged_name = config.get("privileged_name_override") or group_label(config["sensitive_col"], config["privileged_val"])
+    unprivileged_name = config.get("unprivileged_name_override") or group_label(config["sensitive_col"], config["unprivileged_val"])
 
     after_explanations = build_explanations(
         disparate_impact=after_metrics["disparate_impact"],
