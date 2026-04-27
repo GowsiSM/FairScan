@@ -7,7 +7,7 @@ import {
 } from "react";
 import {
   onAuthStateChanged,
-  signInWithPopup,
+  signInWithRedirect,
   signOut as firebaseSignOut,
   type User,
 } from "firebase/auth";
@@ -78,19 +78,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       );
     }
     try {
-      await signInWithPopup(auth, googleProvider);
+      await signInWithRedirect(auth, googleProvider);
     } catch (err: any) {
-      if (err.code === "auth/popup-blocked") {
-        // signInWithRedirect is broken in modern browsers (storage partitioning).
-        // Surface a friendly error so the user knows what to do.
-        throw new Error(
-          "popup-blocked: Please allow popups for this site in your browser settings, then try again.",
-        );
-      }
-      // auth/popup-closed-by-user — user dismissed intentionally, swallow silently
-      if (err.code === "auth/popup-closed-by-user" || err.code === "auth/cancelled-popup-request") {
-        return;
-      }
       console.error("Google sign-in failed:", err);
       throw err;
     }
