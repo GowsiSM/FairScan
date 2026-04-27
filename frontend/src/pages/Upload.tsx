@@ -321,9 +321,18 @@ export default function Upload({ onResult, onBack }: Props) {
 
       // 3. Pre-select Privileged & Unprivileged from suggested_roles
       if (sensCol && aiData.suggested_roles) {
-        const priv = aiData.suggested_roles.privileged_group;
-        const unpriv = aiData.suggested_roles.unprivileged_group;
+        let priv = aiData.suggested_roles.privileged_group;
+        let unpriv = aiData.suggested_roles.unprivileged_group;
         
+        // Reverse lookup if the AI maliciously returned the semantic text instead of the raw data value
+        if (aiData.group_mappings?.[sensCol]) {
+          const map = aiData.group_mappings[sensCol];
+          const revPriv = Object.keys(map).find(k => map[k] === priv);
+          const revUnpriv = Object.keys(map).find(k => map[k] === unpriv);
+          if (revPriv) priv = revPriv;
+          if (revUnpriv) unpriv = revUnpriv;
+        }
+
         // Find them in the actual unique values for safety, or just trust the AI
         if (priv) setPrivVal(priv);
         if (unpriv) setUnprivVal(unpriv);
@@ -331,8 +340,14 @@ export default function Upload({ onResult, onBack }: Props) {
 
       // 4. Pre-select Positive Outcome
       if (aiData.suggested_roles?.positive_outcome) {
-        setPositiveLabel(aiData.suggested_roles.positive_outcome);
-      } else if (outCol && aiData.outcome_values[outCol]) {
+        let pos = aiData.suggested_roles.positive_outcome;
+        if (outCol && aiData.outcome_values?.[outCol]) {
+          const map = aiData.outcome_values[outCol];
+          const revPos = Object.keys(map).find(k => map[k] === pos);
+          if (revPos) pos = revPos;
+        }
+        setPositiveLabel(pos);
+      } else if (outCol && aiData.outcome_values?.[outCol]) {
          const vals = aiData.outcome_values[outCol];
          const posVal = Object.keys(vals).find(
            (v) => vals[v].includes("positive") || vals[v].includes("favorable")

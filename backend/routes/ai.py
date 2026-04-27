@@ -107,7 +107,7 @@ Return EXACTLY this JSON structure and nothing else:
   "outcome_values": {{ "col_name": {{ "val": "not impacted", "val2": "impacted" }}, "another_col": {{ "0": "no", "1": "yes" }} }},
   "group_mappings": {{ "col_name": {{ "1": "Male", "0": "Female" }}, "another_col": {{ "2": "Other" }} }},
   "numerical_groups": {{ "col_name": ["Young (0-20)", "Old (21+)"] }},
-  "suggested_roles": {{ "privileged_group": "exact_value_from_data", "unprivileged_group": "exact_value_from_data", "positive_outcome": "exact_value_from_data" }}
+  "suggested_roles": {{ "privileged_group": "RAW_VALUE_FROM_DATASET (e.g. 1.0)", "unprivileged_group": "RAW_VALUE_FROM_DATASET (e.g. 0.0)", "positive_outcome": "RAW_VALUE_FROM_DATASET (e.g. 1)" }}
 }}
 """
 
