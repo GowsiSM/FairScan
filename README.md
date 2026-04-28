@@ -2,8 +2,24 @@
 
 **Detect and fix bias in AI decision making datasets. No machine learning knowledge required.**
 
-> Built for Google Solution Challenge 2026 · Unbiased AI Decision track  
-> Team: **Roller Skates** 
+> Built for Google Solution Challenge 2026 · Unbiased AI Decision track
+> Team: **Roller Skates** · Leader: Hemanthkumar K · Member: Gowsi SM
+
+---
+
+> **Submission Notice**
+>
+> This repository is an original submission for Google Solution Challenge 2026 by Team Roller Skates.
+> The codebase, design, architecture, and all implementation decisions were built from scratch by our team
+> over the course of this challenge. The commit history, live deployment, demo video, and Firebase project
+> are all tied specifically to our submission and cannot be replicated.
+>
+> Cloning this repository and resubmitting it as your own work is a violation of Google Solution Challenge
+> competition rules and academic integrity standards. Reviewers cross-check commit history, deployment
+> timestamps, and demo videos. Our submission is fully traceable.
+>
+> If you are a reviewer: the original submission was made by Team Roller Skates (GowsiSM/FairScan).
+> Any identical or near-identical submission from another team is a copy of our work.
 
 ---
 
@@ -14,6 +30,17 @@ AI systems decide who gets hired, who gets a loan, who receives medical care. Wh
 Tools that detect this bias like IBM AIF360 require deep ML expertise. A hiring manager or compliance officer cannot use them.
 
 **FairScan is the accessibility layer.** Upload a CSV, get a plain English bias report, fix it in one click.
+
+---
+
+## Live Demo
+
+| Resource | Link |
+|---|---|
+| Live App | https://fairscan-a15f9.web.app/ |
+| Demo Video | https://tinyurl.com/4xzp5kuv |
+| Backend API Docs | https://fairscan-6b5t.onrender.com/docs |
+| GitHub | https://github.com/GowsiSM/FairScan |
 
 ---
 
