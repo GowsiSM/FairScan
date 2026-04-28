@@ -1,119 +1,94 @@
 # FairScan ⚖️
 
-**Detect and fix bias in AI decision-making datasets — no machine learning knowledge required.**
+**Detect and fix bias in AI decision making datasets — no machine learning knowledge required.**
 
-Built for Google Solution Challenge 2026 · Unbiased AI Decision track
-
----
-
-## The Problem
-
-AI systems are making life-changing decisions — who gets hired, who gets a loan, who receives medical care. But if these systems are trained on historically unfair data, they silently repeat and amplify the same discrimination.
-
-The tools that detect this bias (like IBM AIF360) exist — but they require deep technical expertise. A hiring manager or compliance officer can't use them.
-
-**FairScan is the accessibility layer.**
+> Built for Google Solution Challenge 2026 · Unbiased AI Decision track  
+> Team: **Roller Skates** 
 
 ---
 
-## What It Does
+## What is FairScan?
 
-1. **Upload** a CSV dataset (hiring, lending, healthcare, or any decision data)
-2. **Detect** — FairScan measures three fairness metrics and explains them in plain English
-3. **Understand** — See *why* bias exists: which features contribute most, AI-generated root cause analysis
-4. **Fix** — one click rebalances your dataset using IBM's Reweighing algorithm
-5. **Certify** — Get a FairScan Certification Badge (Fair / Needs Review / Not Fair)
-6. **Download** the corrected dataset, ready for fairer model training
+AI systems decide who gets hired, who gets a loan, who receives medical care. When these systems are trained on historically unfair data, they silently repeat and amplify discrimination.
 
----
+Tools that detect this bias like IBM AIF360 require deep ML expertise. A hiring manager or compliance officer cannot use them.
 
-## Key Features
-
-| Feature | Description |
-|---------|-------------|
-| 🔍 **Bias Root Cause Analysis** | Identifies which dataset features (e.g., experience, education, location) contribute most to the detected bias — answering *why* bias exists, not just *that* it exists |
-| 🧠 **AI Explanation Layer** | One-click Gemini-powered plain-English explanation of the bias, its probable causes, real-world impact, and recommended next steps |
-| ⚖️ **Certification Badge** | Visual pass/review/fail badge: ✅ FairScan Certified (score ≥ 70), ⚠️ Needs Review (40–69), ❌ Not Fair (< 40) |
-| 📊 **Before vs After Visualization** | Animated comparison showing group outcome rates shifting after the fix is applied |
-| 🧠 **Domain-Aware Metric Guide** | Recommends the most relevant fairness metric based on your domain (Hiring → Equal Opportunity, Lending → Disparate Impact, Healthcare → Equalized Odds) |
-| 🔐 **Privacy-First Design** | All data processed in-memory, never stored. "Data not stored" badge displayed on every scan |
+**FairScan is the accessibility layer.** Upload a CSV, get a plain English bias report, fix it in one click.
 
 ---
 
-## Design Decisions
-
-> **FairScan currently uses in-memory processing for speed and privacy. In production, we would add secure audit logging for compliance tracking.**
-
-This is a conscious design decision — we prioritize user trust and data privacy over audit trail persistence. For enterprise deployments, a secure logging layer would be added to meet regulatory compliance requirements.
-
----
-
-## Demo
-
-> Try it live:
-
-Sample datasets included — no upload needed to explore:
-
-- `hiring.csv` : job application decisions
-- `lending.csv` : loan approvals
-- `healthcare.csv` : treatment allocation
-
----
-
-## Example Output
+## How It Works
 
 ```
-Scan complete
-Women are 36% less likely to be hired.
-
-Fairness Score: 34 / 100  →  High bias detected
-❌ Not Fair
-
-Disparate Impact:      0.64   (threshold: 0.8)
-Statistical Parity:   -0.32   (threshold: 0)
-Equal Opportunity:    -0.19   (threshold: 0)
-
-Top bias contributors:
-  Experience: 42%
-  Education:  28%
-  Location:   18%
-
-After fix → Fairness Score: 99 / 100
-✅ FairScan Certified
+Upload CSV  →  Configure columns  →  Detect bias  →  View report  →  Fix & download
 ```
+
+**Step 1 — Upload**  
+Drop any CSV dataset — hiring decisions, loan approvals, or healthcare records. Pick a demo dataset to try instantly without uploading anything.
+
+**Step 2 — Configure**  
+Select your sensitive attribute (e.g. gender, race), outcome column (e.g. hired), and group values. Gemini AI auto-suggests the right columns for you.
+
+**Step 3 — Detect**  
+The backend computes three fairness metrics using IBM AIF360 and translates them into plain English — *"Women are 36% less likely to be hired."* A Fairness Score (0–100) summarizes the result. Gemini generates a full explanation of root causes.
+
+**Step 4 — Fix**  
+One click applies the Reweighing algorithm. A before/after comparison shows the improvement. Download the corrected dataset, ready for fairer model training.
+
+---
+
+## Features
+
+- **CSV Upload + Column Mapping** — upload any dataset, or use preloaded demos for Hiring, Lending, and Healthcare
+- **Fairness Score 0–100** — animated ring, color-coded red/yellow/green, one number anyone understands
+- **Three Fairness Metrics** — Disparate Impact, Statistical Parity, Equal Opportunity — each explained as a human sentence
+- **Gemini AI Explanation** — domain-specific plain-English analysis of why the bias exists and what drives it
+- **One-Click Bias Fix** — IBM AIF360 Reweighing applied automatically, before/after comparison shown
+- **Download Debiased Dataset** — CSV with `reweighing_weight` column, use as `sample_weight` in model training
+- **Firebase Report History** — sign in with Google, save reports to Firestore, revisit past scans anytime
+- **Bias Certification Badge** — datasets that pass the fairness threshold receive a certification badge
+- **Training Data + Model Predictions** — analyze raw historical data *or* analyze what a trained model actually predicts
+- **Domain Presets** — Hiring, Lending, Healthcare with context-aware metric explanations and regulatory references
 
 ---
 
 ## Tech Stack
 
-| Layer          | Tools                                 |
-| -------------- | ------------------------------------- |
-| Frontend       | React + TypeScript + Vite             |
-| Backend        | FastAPI + Python                      |
-| Bias Detection | IBM AI Fairness 360 (AIF360)          |
-| AI Layer       | Google Gemini (column mapping + bias explanation) |
-| Deployment     | Vercel (frontend) · Railway (backend) |
+| Layer | Tools |
+|---|---|
+| Frontend | React + TypeScript + Vite |
+| Backend | FastAPI + Python |
+| Bias Detection | IBM AI Fairness 360 (AIF360) |
+| AI Explanation | Gemini 2.0 Flash via OpenRouter |
+| Auth + Storage | Firebase Authentication + Cloud Firestore |
+| Frontend Hosting | Firebase Hosting |
+| Backend Hosting | Render |
 
 ---
 
 ## Project Structure
 
 ```
-fairscan/
-├── frontend/                  # React app
+FairScan/
+├── frontend/                        # React app
 │   ├── src/
-│   │   ├── pages/             # Landing, Upload, Report
-│   │   ├── components/        # BiasScore, MetricCard, GroupChart, FixPanel,
-│   │   │                      # BiasContributors, CertBadge, MetricGuide, AiExplainer
-│   │   └── lib/               # API calls, types, mock data
+│   │   ├── pages/                   # Landing, Upload, Report
+│   │   ├── components/              # BiasScore, MetricCard, GroupChart,
+│   │   │                            # FixPanel, AiExplainer, CertBadge,
+│   │   │                            # BiasContributors, HistorySidebar, Navbar
+│   │   ├── lib/                     # api.ts, types.ts, firebase.ts, firestore.ts
+│   │   └── contexts/                # AuthContext (Firebase Auth)
 │   └── public/
-│       └── demo-datasets/     # Sample CSVs for judges
+│       └── demo-datasets/           # Hiring, Lending, Healthcare sample CSVs
 │
-├── backend/                   # FastAPI server
-│   ├── routes/                # /columns, /analyze, /fix, /download, /explain-bias
-│   ├── services/              # bias_engine, explainer, scorer
-│   └── demo_datasets/         # Same sample CSVs served by backend
+├── backend/                         # FastAPI server
+│   ├── routes/                      # /columns /analyze /fix /download
+│   │                                # /explain-bias /presets /demo /ai
+│   ├── services/                    # bias_engine.py scorer.py explainer.py
+│   ├── demo_datasets/               # Same sample CSVs served from backend
+│   └── store.py                     # In-memory session store
 │
+├── firebase.json                    # Firebase Hosting config
 └── README.md
 ```
 
@@ -121,27 +96,53 @@ fairscan/
 
 ## Running Locally
 
-**Backend**
+### Backend
 
 ```bash
 cd backend
-touch .env
-> Then add: GEMINI_API_KEY=your_actual_api_key_here
+
+# Install dependencies (using uv)
+uv sync
+
+# Or using pip
+pip install -r requirements.txt
+
+# Start the server
 uvicorn main:app --reload
 # Runs on http://localhost:8000
 # API docs at http://localhost:8000/docs
 ```
 
-**Frontend**
+**Environment variables needed** — create `backend/.env`:
+```
+OPENROUTER_API_KEY=your_key_here
+```
+
+### Frontend
 
 ```bash
 cd frontend
 npm install
+
+# Copy env template and fill in values
+cp .env.example .env.local
+
 npm run dev
 # Runs on http://localhost:5173
 ```
 
-**Frontend without backend (mock mode)**
+**Environment variables needed** — fill in `frontend/.env.local`:
+```
+VITE_API_URL=http://localhost:8000
+VITE_FIREBASE_API_KEY=
+VITE_FIREBASE_AUTH_DOMAIN=
+VITE_FIREBASE_PROJECT_ID=
+VITE_FIREBASE_STORAGE_BUCKET=
+VITE_FIREBASE_MESSAGING_SENDER_ID=
+VITE_FIREBASE_APP_ID=
+```
+
+### Frontend without backend (mock mode)
 
 ```bash
 # In .env.local set:
@@ -151,32 +152,54 @@ npm run dev
 
 ---
 
+## Testing with Sample Data
+
+Three demo datasets are included in `frontend/public/demo-datasets/` and `backend/demo_datasets/`:
+
+| Dataset | Sensitive Attribute | Outcome | Privileged | Unprivileged | Positive Label |
+|---|---|---|---|---|---|
+| `hiring.csv` | `gender` | `hired` | `1` (Male) | `0` (Female) | `1` |
+| `lending.csv` | `race` | `approved` | `1` | `0` | `1` |
+| `healthcare.csv` | `gender` | `treated` | `1` | `0` | `1` |
+
+On the live app, click any demo chip on the upload page to load them instantly without uploading a file.
+
+---
+
 ## How the Bias Detection Works
 
 FairScan uses three standard fairness metrics from IBM AIF360:
 
-| Metric             | What it measures                          | Flag if...                     |
-| ------------------ | ----------------------------------------- | ------------------------------ |
-| Disparate Impact   | Ratio of positive outcomes between groups | Below 0.8 (the legal 80% rule) |
-| Statistical Parity | Gap in outcome rates between groups       | More than ±10%                 |
-| Equal Opportunity  | Gap among equally qualified candidates    | More than ±10%                 |
+| Metric | What it measures | Biased if... |
+|---|---|---|
+| **Disparate Impact** | Ratio of positive outcomes between groups | Below 0.8 (violates the legal 80% rule) |
+| **Statistical Parity** | Gap in outcome rates between groups | More than ±10% difference |
+| **Equal Opportunity** | Gap among equally qualified candidates | More than ±10% difference |
 
-The **fix** applies Reweighing — it adds a `reweighing_weight` column to your dataset. When you train a model using these weights as `sample_weight`, the model learns fairer patterns without changing historical records.
+The **Fairness Score (0–100)** is a weighted composite of all three metrics — heavier weight on Disparate Impact since it has legal precedent.
 
-### Bias Root Cause Analysis
-
-Beyond just detecting bias, FairScan identifies *which features* in your dataset contribute most to the gap. It uses logistic regression feature importances correlated with the sensitive attribute to surface proxy variables — features that may seem neutral but act as stand-ins for protected characteristics.
+The **fix** applies IBM AIF360 Reweighing — it adds a `reweighing_weight` column to your CSV. Training a model with these weights as `sample_weight` produces fairer predictions without altering historical records.
 
 ---
 
-## Privacy
+## Architecture
 
-🔐 **We do not store your data.** All uploaded datasets are processed entirely in-memory and discarded after analysis. No data is written to disk, logged, or transmitted to third parties. This matters for sensitive domains like healthcare and HR datasets.
-
+```
+Browser (React)
+      │
+      ├── Firebase Auth (Google Sign-in)
+      ├── Firestore (save/load reports)
+      │
+      └── FastAPI Backend (Render)
+                │
+                ├── IBM AIF360 (bias metrics + Reweighing)
+                ├── Gemini 2.0 Flash via OpenRouter (AI explanation)
+                └── In-memory session store (UUID keyed)
+```
 ---
 
 ## Acknowledgements
 
-- [IBM AI Fairness 360](https://aif360.readthedocs.io/) — bias detection and mitigation library
-- [Google Gemini](https://ai.google.dev/) — AI-powered column mapping and bias explanation
+- [IBM AI Fairness 360](https://aif360.readthedocs.io/) — bias detection and mitigation
+- [Gemini 2.0 Flash](https://deepmind.google/technologies/gemini/) via [OpenRouter](https://openrouter.ai/) — AI explanation layer
 - Google Solution Challenge 2026
